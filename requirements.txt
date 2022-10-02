@@ -7,6 +7,7 @@ spacy==3.2.2
 stanza==1.2.3
 spacy_stanza==1.0.0
 textacy==0.11.0
-pythorch_lightning==1.5.2
+pytorch-lightning==1.5.2
 colorama==0.4.4
 fairscale==0.4.3
+setuptools==59.5.0

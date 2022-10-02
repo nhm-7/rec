@@ -2,27 +2,39 @@
 
 This repository contains code and models for our NAACL 2022 paper [What kinds of errors do reference resolution models make and what can we learn from them?]() by Jorge Sánchez, Mauricio Mazuecos, Hernán Maina and Luciana Benotti.
 
+## Installation & set up
 
 
-## Installation
-
-
-Setup the code in a virtualenv
+1) Clone the repository.
 
 ```sh
-$ git clone https://github.com/jadrs/rec.git && cd rec
-$ python3 -m venv venv  && source venv/bin/activate
+$ git clone https://github.com/nhm-7/rec.git && cd rec
 ```
 
-you'll also need a running version of [pytorch](https://pytorch.org/get-started/locally/). You can go to the website and choose the version that best suits your hardware, eg.:
+2) Environment. Any flavour of Conda. We recommend [miniconda](https://docs.conda.io/en/latest/miniconda.html). Use python 3.9 at least.
+
+3) We created a environment.yml file. You need to run the following command:
 
 ```sh
-$ python3 -m pip install torch==1.8.2+cu111 torchvision==0.9.2+cu111 torchaudio==0.8.2 -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
+$ conda env create -f environments/environment.yml
+$ conda activate rec-env
+```
+
+4) You'll also need a running version of [pytorch](https://pytorch.org/get-started/locally/). You can go to the website and choose the version that best suits your hardware. In our case, we installed as follows:
+
+```sh
+$ python3 -m pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch/
+$ python3 -m pip install torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torchvision/
+$ python3 -m pip install torchaudio==0.9.1 -f https://download.pytorch.org/whl/torchaudio/
+```
+
+5) Finally, install the requirements:
+
+```sh
 $ python3 -m pip install -r requirements.txt
 ```
 
 ## Setup data
-
 
 Clone the [Referring Expression Dataset API](https://github.com/lichengunc/refer)
 
@@ -33,9 +45,12 @@ $ git checkout python3
 
 and follow the instructions to access the ReferItGame (a.k.a RefCLEF), RefCOCO, RefCOCO+ and RefCOCOg datasets.
 
+### Download data script
+
+You can use the ```download_data.py``` script to download both refer and mscoco datasets. You just need to adapt the constants ```SETTINGS_REFER``` and ```SETTINGS_MSCOCO``` to your needs. It downloads those datasets and also unzip them to a custom path. We recommend to follow the data structure of the refer repository.
+
 
 ## Training and validation
-
 
 Run
 
