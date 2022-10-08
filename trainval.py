@@ -2,37 +2,24 @@
 detector-free referring expresion comprehension
 '''
 import os
-
 import io
-
-from parser import ArgumentParser
-
-from PIL import Image
-
+import transformers
 import torch
 
+import pytorch_lightning as pl
+import matplotlib.pyplot as plt
+from parser import ArgumentParser
+from PIL import Image
 from torchvision.ops import box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 from torchvision.transforms import ToTensor
-
 from torch import nn
 
-import pytorch_lightning as pl
-
-import transformers
-
-import matplotlib.pyplot as plt
-
-from utils import cprint
-
-from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
-
-from transforms import get_transform, undo_box_transforms_batch, denormalize
-
 import models as m
-
+from utils import cprint
+from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
+from transforms import get_transform, undo_box_transforms_batch, denormalize
 from encoders import get_tokenizer
-
 from losses import GIoULoss, FocalLoss, SoftDiceLoss
 
 
