@@ -1,8 +1,7 @@
 import copy
-from typing import Optional, Any
-
 import torch
 
+from typing import Optional, Any
 from torch import Tensor
 from torch import nn
 from torch.nn import functional as F

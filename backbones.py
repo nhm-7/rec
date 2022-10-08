@@ -1,12 +1,11 @@
 import torch
+import timm
 
 import torch.nn as nn
-
+from torchvision.models import resnet, detection, segmentation
 from torchvision.ops.misc import FrozenBatchNorm2d
 
-from torchvision.models import resnet, detection, segmentation
 
-import timm
 
 
 # https://detectron2.readthedocs.io/en/latest/modules/layers.html#detectron2.layers.FrozenBatchNorm2d.convert_frozen_batchnorm

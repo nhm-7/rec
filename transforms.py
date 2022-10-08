@@ -1,9 +1,7 @@
 import torch
 
 from torchvision import transforms
-
 from torchvision.transforms import Compose
-
 from PIL import Image
 
 

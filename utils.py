@@ -1,23 +1,16 @@
+import torch
+import gzip
+import json
+import time
 import numpy as np
 
-import torch
-
-import gzip
-
-import json
-
 from PIL import Image, ImageDraw, ImageFont
-
 from tqdm import tqdm
-
-import time
-
 from datetime import datetime
-
 from colorama import Fore, Style, init
+
+
 init()
-
-
 __color_table__ = {
     None: Style.RESET_ALL,
     "red": Fore.LIGHTRED_EX,

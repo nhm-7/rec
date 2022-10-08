@@ -1,15 +1,11 @@
 import torch
 
 import torch.nn.functional as F
-
 from torch import nn
-
 from torchvision.ops import box_convert
 
 import embeddings as emb
-
 import encoders as enc
-
 from encoders import weight_init
 
 

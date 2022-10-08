@@ -1,19 +1,13 @@
 import os
-
-from collections import OrderedDict
-
 import torch
-
 import transformers
 
 import torch.nn.functional as F
-
+from collections import OrderedDict
 from torch import nn
-
 from torchvision.models import detection
 
 from backbones import get_backbone
-
 from embeddings import Box8PositionEmbedding2D
 
 EPS = 1e-5

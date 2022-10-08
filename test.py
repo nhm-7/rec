@@ -1,23 +1,14 @@
 import argparse
-
 import os
-
 import torch
-
 import transformers
-
 from torchvision.ops import box_iou
 
 from encoders import get_tokenizer
-
 from utils import cprint, progressbar
-
 import models as m
-
 from transforms import get_transform, undo_box_transforms_batch
-
 from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
-
 from re_classifier import REClassifier
 
 
