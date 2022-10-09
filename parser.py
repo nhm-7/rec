@@ -136,7 +136,7 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--max-epochs',
             help='max number of epochs',
-            default=3,
+            default=1,
             type=int
         )
         group.add_argument(
