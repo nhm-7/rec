@@ -286,7 +286,7 @@ def run(args):
         ) for split in ds_splits
     }
 
-    pdata = 0.1 if args.debug else 1.0
+    pdata = 0.05 if args.debug else 1.0
 
     model = m.IntuitionKillingMachine(
         backbone=args.backbone,

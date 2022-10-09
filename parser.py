@@ -150,7 +150,8 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--gpus',
             help='GPUs identifiers',
-            type=str
+            type=str,
+            default='0'
         )
         group.add_argument(
             '--num-workers',
@@ -178,6 +179,7 @@ class ArgumentParser(argparse.ArgumentParser):
             '--debug',
             help='if set, run on a small percentage of the (training) data',
             action='store_true',
+            default=True
         )
         group.add_argument(
             '--early-stopping',
