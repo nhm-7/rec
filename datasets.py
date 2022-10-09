@@ -9,7 +9,6 @@ from PIL import Image
 from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, clip_boxes_to_image
 
-from re_classifier import REClassifier
 from utils import progressbar
 
 
