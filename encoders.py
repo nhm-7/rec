@@ -9,6 +9,8 @@ from torchvision.models import detection
 
 from backbones import get_backbone
 from embeddings import Box8PositionEmbedding2D
+from transformers_pos import TransformerEncoder, TransformerEncoderLayer
+
 
 EPS = 1e-5
 
@@ -216,11 +218,6 @@ class TransformerImageEncoder(nn.Module):
             nn.GroupNorm(1, out_channels, eps=EPS),
         )
         self.proj.apply(weight_init)
-
-        from transformers_pos import (
-            TransformerEncoder,
-            TransformerEncoderLayer,
-        )
 
         self.encoder = TransformerEncoder(
             TransformerEncoderLayer(

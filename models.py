@@ -16,6 +16,9 @@ from encoders import weight_init
 from utils import conv3x3
 from losses import GIoULoss, FocalLoss, SoftDiceLoss
 from transforms import undo_box_transforms_batch, denormalize
+from transformers_pos import (
+    XTransformerEncoder, TransformerEncoder, TransformerEncoderLayer,
+)
 
 
 class IntuitionKillingMachine(nn.Module):
@@ -64,12 +67,6 @@ class IntuitionKillingMachine(nn.Module):
 
         self.lan_pos_emb = emb.LearnedPositionEmbedding1D(
             embedding_dim=embedding_size
-        )
-
-        from transformers_pos import (
-            XTransformerEncoder,
-            TransformerEncoder,
-            TransformerEncoderLayer,
         )
 
         self.encoder = TransformerEncoder(
