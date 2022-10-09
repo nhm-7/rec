@@ -7,15 +7,7 @@ from torchvision.ops import box_convert
 import embeddings as emb
 import encoders as enc
 from encoders import weight_init
-
-
-def conv3x3(in_channels, out_channels, num_groups=0):
-    return nn.Sequential(
-        # Conv2d w/o bias since BatchNorm2d/GroupNorm already accounts for it (affine=True)
-        nn.Conv2d(in_channels, out_channels, (3, 3), 1, 1, bias=False),
-        nn.BatchNorm2d(out_channels) if num_groups < 1 else nn.GroupNorm(num_groups, out_channels),
-        nn.ReLU(inplace=True),
-    )
+from utils import conv3x3
 
 
 class IntuitionKillingMachine(nn.Module):

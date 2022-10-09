@@ -136,7 +136,7 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--max-epochs',
             help='max number of epochs',
-            default=50,
+            default=3,
             type=int
         )
         group.add_argument(
@@ -156,7 +156,8 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--num-workers',
             help='dataloader num workers',
-            type=int
+            type=int,
+            default=20
         )
         group.add_argument(
             '--seed',

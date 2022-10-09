@@ -4,8 +4,9 @@ import json
 import time
 import numpy as np
 
-from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
+from torch import nn
+from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from colorama import Fore, Style, init
 
@@ -17,6 +18,15 @@ __color_table__ = {
     "green": Fore.LIGHTGREEN_EX,
     "blue": Fore.LIGHTBLUE_EX,
 }
+
+
+def conv3x3(in_channels, out_channels, num_groups=0):
+    return nn.Sequential(
+        # Conv2d w/o bias since BatchNorm2d/GroupNorm already accounts for it (affine=True)
+        nn.Conv2d(in_channels, out_channels, (3, 3), 1, 1, bias=False),
+        nn.BatchNorm2d(out_channels) if num_groups < 1 else nn.GroupNorm(num_groups, out_channels),
+        nn.ReLU(inplace=True),
+    )
 
 
 def cprint(*parg, **kwargs):
