@@ -10,10 +10,10 @@ from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 
-import embeddings as emb
 import encoders as enc
 from encoders import weight_init
 from utils import conv3x3
+from embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
 from losses import GIoULoss, FocalLoss, SoftDiceLoss
 from transforms import undo_box_transforms_batch, denormalize
 from transformers_pos import (
@@ -55,7 +55,7 @@ class IntuitionKillingMachine(nn.Module):
             self.vis_enc.backbone.conv1.requires_grad = False
             self.vis_enc.backbone.conv1.eval()
 
-        self.vis_pos_emb = emb.LearnedPositionEmbedding2D(
+        self.vis_pos_emb = LearnedPositionEmbedding2D(
             embedding_dim=embedding_size
         )
 
@@ -65,7 +65,7 @@ class IntuitionKillingMachine(nn.Module):
             dropout_p=dropout_p
         )
 
-        self.lan_pos_emb = emb.LearnedPositionEmbedding1D(
+        self.lan_pos_emb = LearnedPositionEmbedding1D(
             embedding_dim=embedding_size
         )
 
