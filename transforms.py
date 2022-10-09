@@ -108,34 +108,6 @@ class Resize(transforms.Resize):
         return input
 
 
-class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
-    def __call__(self, input):
-        if not isinstance(input, dict):
-            return super().__call__(input)
-
-        assert 'image' in input
-
-        if not torch.is_tensor(input['image']):
-            raise NotImplementedError('use Resize after ToTensor')
-
-        result = super().__call__(input['image'])
-        if result is input['image']:  # not flipped
-            return input
-        input['image'] = result
-
-        if 'mask' in input:
-            input['mask'] = torch.flip(input['mask'], dims=(-1,))
-
-        img_w = input['image'].size(2)
-
-        if 'bbox' in input:
-            input['bbox'][:, (0, 2)] = img_w - input['bbox'][:, (2, 0)]
-
-        if 'expr' in input:
-            input['expr'] = input['expr'].replace('left', '<LEFT>').replace('right', 'left').replace('<LEFT>', 'right')
-        return input
-
-
 class RandomAffine(transforms.RandomAffine):
     def get_params(self, *args, **kwargs):
         self.params = super().get_params(*args, **kwargs)
@@ -180,15 +152,6 @@ class RandomAffine(transforms.RandomAffine):
                 x_max, y_max, _ = pt.max(dim=1).values
                 input['bbox'][i, :] = torch.FloatTensor([x_min, y_min, x_max, y_max])
 
-        return input
-
-
-class ColorJitter(transforms.ColorJitter):
-    def __call__(self, input):
-        if not isinstance(input, dict):
-            return super().__call__(input)
-        assert 'image' in input
-        input['image'] = super().__call__(input['image'])
         return input
 
 
