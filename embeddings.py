@@ -8,9 +8,6 @@ from torch import nn
 class PositionEmbedding1D(nn.Module):
     def __init__(self, embedding_dim, dropout=0.1, max_len=128):
         super().__init__()
-
-        # self.dropout = nn.Dropout(p=dropout)
-
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, embedding_dim, 2) * (-math.log(10000.0) / embedding_dim))
         pe = torch.zeros(max_len, embedding_dim)
@@ -20,9 +17,6 @@ class PositionEmbedding1D(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        # # x: Tensor, shape [batch_size, seq_len, embedding_dim]
-        # x = x + self.pe[:, :x.size(1)]
-        # return self.dropout(x)
         N, T, _ = x.size()
         return self.pe[:, :T].repeat(N, 1, 1)
 
@@ -121,8 +115,6 @@ class Box8PositionEmbedding2D(nn.Module):
         )
         y2, x2 = x1+1.0/W, y1+1.0/H
         ww, hh = x2-x1, y2-y1
-        # x1, y1 = 2*x1-1, 2*y1-1
-        # x2, y2 = 2*x2-1, 2*y2-1
         xc, yc = x1+0.5/W, y1+0.5/H
 
         pos = torch.stack([x1, y1, x2, y2, xc, yc, ww, hh], dim=-1)

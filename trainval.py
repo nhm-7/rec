@@ -32,21 +32,10 @@ class LitModel(pl.LightningModule):
         self.mu = mu
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
-
         self.l1_loss = nn.SmoothL1Loss(reduction='mean', beta=beta)
         self.giou_loss = GIoULoss(reduction='mean')
-        # self.segm_loss = nn.BCEWithLogitsLoss(reduction='mean')
         self.segm_loss = FocalLoss(reduction='mean')
-        # self.segm_loss_2 = SoftDiceLoss(reduction='mean')
-
         self.scheduler_param = scheduler_param
-
-        # self.save_hyperparameters()
-        #     'beta', 'gamma', 'mu', 'learning_rate', 'weight_decay',
-        #     'scheduler_param'
-        # )
-
-        # self.automatic_optimization = False
 
     @torch.no_grad()
     def peep(self, batch, preds, idxs=[0,]):
@@ -101,7 +90,6 @@ class LitModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         preds, segm_mask = self.model(batch)
-
         # AMP
         preds = preds.to(batch['bbox'].dtype)
         if segm_mask is not None:
@@ -128,32 +116,10 @@ class LitModel(pl.LightningModule):
 
         hits = (iou > 0.5).float()
         self.log('acc/train', hits.mean().detach(), on_step=False, on_epoch=True)
-
-        # # ---
-        # # SAM
-        # # $ git clone https://github.com/davda54/sam
-
-        # optimizer = self.optimizers()
-
-        # # first forward-backward pass
-        # self.manual_backward(loss, optimizer)
-        # optimizer.first_step(zero_grad=True)
-
-        # loss_2, _ = self.loss(
-        #     dbox={'preds': preds, 'targets': batch['bbox']},
-        #     dmask={'preds': segm_mask, 'targets': batch['mask_bbox']},
-        #     dcontr={'preds': preds, 'preds_adv': preds_adv, 'targets': batch['bbox']}
-        # )
-
-        # # second forward-backward pass
-        # self.manual_backward(loss_2, optimizer)
-        # optimizer.second_step(zero_grad=True)
-
         return loss
 
     def validation_step(self, batch, batch_idx):
         preds, segm_mask = self.model(batch)
-
         # AMP
         preds = preds.to(batch['bbox'].dtype)
         if segm_mask is not None:
@@ -173,10 +139,8 @@ class LitModel(pl.LightningModule):
                 'validation', grid, global_step=self.current_epoch
             )
             self.logger.experiment.flush()
-
         # to original image coordinates
         preds = undo_box_transforms_batch(preds, batch['tr_param'])
-
         # clamp to original image size
         h0, w0 = batch['image_size'].unbind(1)
         image_size = torch.stack([w0, h0, w0, h0], dim=1)
@@ -193,15 +157,10 @@ class LitModel(pl.LightningModule):
 
         hits = (iou > 0.75).float()
         self.log('acc/val75', hits.mean().detach(), on_step=False, on_epoch=True, sync_dist=True)
-
-        # fig = gradient_flow(self.model)
-        # self.logger.experiment.add_figure('gradient flow', fig, 0)
-
         return loss
 
     def test_step(self, batch, batch_idx):
         preds, _ = self.model(batch)
-
         # AMP
         preds = preds.to(batch['bbox'].dtype)
 
@@ -242,19 +201,6 @@ class LitModel(pl.LightningModule):
             lr=self.learning_rate,
             weight_decay=self.weight_decay
         )
-
-        # import sys
-        # sys.path.append('sam')
-        # from sam import SAM
-        # optimizer = SAM(
-        #     [
-        #         {'params': slow_params, 'lr': 0.1*self.learning_rate},
-        #         {'params': fast_params},
-        #     ],
-        #     torch.optim.Adam,
-        #     lr=self.learning_rate,
-        #     #momentum=0.9
-        # )
 
         if self.scheduler_param in (None, {}):
             return optimizer
@@ -448,7 +394,6 @@ def run(args):
     profiler = None
     if args.profile:
         profiler = pl.profiler.PyTorchProfiler(
-            # filename=os.path.join(args.cache, 'trainval.prof'),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(output_dir)
         )
 
@@ -476,8 +421,6 @@ def run(args):
         strategy=strategy,
         limit_train_batches=pdata,
         limit_val_batches=pdata,
-        # gradient_clip_val=1.0,
-        # enable_pl_optimizer=False,
         accumulate_grad_batches=args.grad_steps,
         enable_checkpointing=bool(not args.debug),
         precision=16 if args.amp else 32,
@@ -497,7 +440,6 @@ def run(args):
         print(f'evaluating \'{split}\' split ...')
         trainer.test(
             dataloaders=loaders[split],
-            # ckpt_path='best',
             ckpt_path=checkpoint_callback.best_model_path
         )
 

@@ -13,7 +13,6 @@ from embeddings import Box8PositionEmbedding2D
 EPS = 1e-5
 
 TRANSFORMER_MODEL = 'bert-base-uncased'
-# TRANSFORMER_MODEL = 'distilroberta-base'
 
 
 def get_tokenizer(cache=None):
@@ -81,7 +80,6 @@ class ImageEncoder(nn.Module):
         self.proj = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, (1, 1), 1, bias=False),
             nn.GroupNorm(1, out_channels, eps=EPS),
-            # nn.ReLU(inplace=True),
         )
         self.proj.apply(weight_init)
 
@@ -126,13 +124,6 @@ class FPNImageEncoder(nn.Module):
             return_layers = OrderedDict({
                 'layer1': '0', 'layer2': '1', 'layer3': '2', 'layer4': '3'
             })
-
-        # elif backbone == 'cspdarknet53':
-        #     in_channels_list = [128, 256, 512, 1024]
-        #     return_layers = OrderedDict({
-        #         '1':'0', '2':'1', '3':'2', '4':'3'
-        #     })
-
         else:
             raise RuntimeError('not a valid backbone')
 
@@ -155,7 +146,6 @@ class FPNImageEncoder(nn.Module):
             level: nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, (1, 1), 1, bias=False),
                 nn.GroupNorm(1, out_channels, eps=EPS),
-                # nn.ReLU(inplace=True),
             ) for level in return_layers.values()
         })
         self.proj.apply(weight_init)
@@ -166,13 +156,11 @@ class FPNImageEncoder(nn.Module):
 
     def forward(self, x, mask=None):
         x = self.fpn(x)
-
         # smallest feature map (eg. 16x16 for an input of 512x512 pixels)
         _, _, H, W = list(x.values())[-1].size()
 
         x_out = None
         for level, fmap in x.items():
-            # fmap = torch.relu(fmap)  # FPN blocks end in a conv2d, w/o activ.
             if self.pos_emb is not None:
                 fmap = torch.cat([fmap, self.pos_emb(fmap)], dim=1)  # +Pos
             fmap = self.proj[level](fmap)   # Conv+BN+ReLU
@@ -226,7 +214,6 @@ class TransformerImageEncoder(nn.Module):
         self.proj = nn.Sequential(
             nn.Conv2d(channels, out_channels, (1, 1), 1, bias=False),
             nn.GroupNorm(1, out_channels, eps=EPS),
-            # nn.ReLU(inplace=True),
         )
         self.proj.apply(weight_init)
 
@@ -300,8 +287,6 @@ class LanguageEncoder(nn.Module):
         self.proj = nn.Sequential(
             nn.Linear(768, out_features),
             nn.LayerNorm(out_features, eps=1e-5),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(dropout_p),
         )
         self.proj.apply(weight_init)
 
@@ -332,7 +317,6 @@ class RNNLanguageEncoder(nn.Module):
         ).embeddings.word_embeddings
         self.embeddings.weight.requires_grad = True
 
-        # self.dropout_emb = nn.Dropout(0.5)
         self.dropout_emb = nn.Dropout(dropout_p)
 
         assert model_type in ('gru', 'lstm')
@@ -348,8 +332,6 @@ class RNNLanguageEncoder(nn.Module):
         self.proj = nn.Sequential(
             nn.Linear(2*hidden_size, out_features),
             nn.LayerNorm(out_features, eps=1e-5),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(dropout_p),
         )
         self.proj.apply(weight_init)
 
@@ -384,14 +366,11 @@ class SimpleEncoder(nn.Module):
         ).embeddings.word_embeddings
         self.embeddings.weight.requires_grad = True
 
-        # self.dropout_emb = nn.Dropout(0.5)
         self.dropout_emb = nn.Dropout(dropout_p)
 
         self.proj = nn.Sequential(
             nn.Linear(768, out_features),
             nn.LayerNorm(out_features, eps=1e-5),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(dropout_p),
         )
         self.proj.apply(weight_init)
 
@@ -404,5 +383,4 @@ class SimpleEncoder(nn.Module):
         z_mask = z['attention_mask']
         z = self.embeddings(z['input_ids'])
         z = self.proj(self.dropout_emb(z))
-        # z[:, 0] = torch.mean(z[:, 1:], 1)
         return z, z_mask

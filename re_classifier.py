@@ -149,7 +149,6 @@ class REClassifier(object):
                 use_gpu=use_gpu,
             )
         else:
-            #self.nlp = spacy.load('en_core_web_md')
             self.nlp = spacy.load('en_core_web_trf')
 
         # when checking for relational expresions, exclude nouns that refer to
@@ -157,7 +156,7 @@ class REClassifier(object):
         self._EXCLUDE = COLORS + SPATIAL_KEYWORDS
 
     def is_spatial(self, doc):
-        # check for spatial prepositions and keywords
+        """Check for spatial prepositions and keywords."""
         if isinstance(doc, str):
             doc = self.nlp(doc)
         ngrams = [w.text for w in extract.ngrams(doc, (1, 2, 3), filter_stops=False)]
@@ -165,14 +164,14 @@ class REClassifier(object):
         return (spatials != [])
 
     def is_ordinal(self, doc):
-        # check for ordinal expressions (entities)
+        """Check for ordinal expressions (entities)."""
         if isinstance(doc, str):
             doc = self.nlp(doc)
         entities = list(extract.entities(doc, include_types=('ORDINAL',)))
         return (entities != [])
 
     def is_relational(self, doc):
-        # check if expresion is relational
+        """Check if an expresion is relational."""
         if isinstance(doc, str):
             doc = self.nlp(doc)
         valid_noun = [
@@ -199,8 +198,6 @@ class REClassifier(object):
 
 def main():
     data_root, dataset, split_by = 'refer/data', 'refclef', 'berkeley'
-    #data_root, dataset, split_by = 'refer/data', 'refcoco', 'unc'
-    #data_root, dataset, split_by = 'refer/data', 'refcocog', 'umd'
 
     import os
     import sys
@@ -244,8 +241,6 @@ def main():
                 ordinal.append(len_)
             if stype[2]:
                 relational.append(len_)
-
-            # print(*stype, sent)#, [(w, w.pos_) for w in doc])
 
     print(f'all: {len(all_)}, {np.mean(all_):.2f} ({np.std(all_):.2f})')
     print(f'intrinsic: {len(intrinsic)}, {np.mean(intrinsic):.2f} ({np.std(intrinsic):.2f})')

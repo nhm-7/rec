@@ -15,17 +15,10 @@ from utils import progressbar
 
 def collate_fn(batch):
     image = torch.stack([s['image'] for s in batch], dim=0)
-
     image_size = torch.FloatTensor([s['image_size'] for s in batch])
-
-    # bbox = torch.stack([s['bbox'] for s in batch], dim=0)
     bbox = torch.cat([s['bbox'] for s in batch], dim=0)
-
-    # bbox_raw = torch.stack([s['bbox_raw'] for s in batch], dim=0)
     bbox_raw = torch.cat([s['bbox_raw'] for s in batch], dim=0)
-
     expr = [s['expr'] for s in batch]
-
     tok = None
     if batch[0]['tok'] is not None:
         tok = {
@@ -105,15 +98,8 @@ class RECDataset(torch.utils.data.Dataset):
             raise IOError(f'{file_name} not found')
         img = Image.open(file_name).convert('RGB')
 
-        # if isinstance(expr, (list, tuple)):
-        #     expr = random.choice(expr)
-
         # image size as read from disk (PIL)
         W0, H0 = img.size
-
-        # # ensure box coordinates fall inside the image
-        # bbox = clip_boxes_to_image(bbox, (H0, W0))
-        # assert torch.all(bbox[:, (0, 1)] <= bbox[:, (2, 3)])  # xyxy format
 
         sample = {
             'image': img,
@@ -161,8 +147,6 @@ class RegionDescriptionsVisualGnome(RECDataset):
                  max_length=32, with_mask_bbox=False):
         super().__init__(transform=transform, tokenizer=tokenizer,
                          max_length=max_length, with_mask_bbox=with_mask_bbox)
-
-
         # if available, read COCO IDs from the val, testA and testB splits from
         # the RefCOCO dataset
         try:

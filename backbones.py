@@ -6,8 +6,6 @@ from torchvision.models import resnet, detection, segmentation
 from torchvision.ops.misc import FrozenBatchNorm2d
 
 
-
-
 # https://detectron2.readthedocs.io/en/latest/modules/layers.html#detectron2.layers.FrozenBatchNorm2d.convert_frozen_batchnorm
 @torch.no_grad()
 def convert_frozen_batchnorm(module):
@@ -53,16 +51,7 @@ def get_backbone(backbone, pretrained=True):
         model = convert_frozen_batchnorm(
             segmentation.deeplabv3_resnet101(pretrained=pretrained).backbone
         )
-
     elif backbone in ('cspdarknet53', 'efficientnet-b0', 'efficientnet-b3'):
-        # model = convert_frozen_batchnorm(
-        #     timm.create_model(
-        #         backbone.replace('-', '_'),
-        #         pretrained=True,
-        #         features_only=True,
-        #         #out_indices=(1, 2, 3, 4)
-        #     )
-        # )
         model = convert_frozen_batchnorm(
             timm.create_model(
                 backbone.replace('-', '_'),
@@ -71,11 +60,8 @@ def get_backbone(backbone, pretrained=True):
                 global_pool=''
             )
         )
-
     else:
         raise RuntimeError(f'{backbone} is not a valid backbone')
-
     # empty cache (dealloc modules other than the backbone)
     torch.cuda.empty_cache()
-
     return model

@@ -152,11 +152,6 @@ class ArgumentParser(argparse.ArgumentParser):
             help='GPUs identifiers',
             type=str
         )
-        # group.add_argument(
-        #     '--num-threads',
-        #     help='torch num threads',
-        #     type=int
-        # )
         group.add_argument(
             '--num-workers',
             help='dataloader num workers',

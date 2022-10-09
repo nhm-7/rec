@@ -55,9 +55,6 @@ class SquarePad(torch.nn.Module):
         input['image'] = transforms.functional.pad(
             input['image'], padding, fill=0, padding_mode='constant'
         )
-        # input['image'] = transforms.functional.pad(
-        #     input['image'], padding, padding_mode='edge'
-        # )
 
         if 'mask' in input:
             input['mask'] = transforms.functional.pad(
@@ -136,11 +133,6 @@ class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
 
         if 'expr' in input:
             input['expr'] = input['expr'].replace('left', '<LEFT>').replace('right', 'left').replace('<LEFT>', 'right')
-
-        # if 'tr_param' not in input:
-        #     input['tr_param'] = []
-        # input['tr_param'].append({'random_horizontal_flip': img_w})
-
         return input
 
 
@@ -158,7 +150,6 @@ class RandomAffine(transforms.RandomAffine):
         if not torch.is_tensor(input['image']):
             raise NotImplementedError('put the Resize transform after ToTensor')
 
-        #self.fill = input['image'].mean((1,2))  # set fill value to the mean pixel value
         result = super().__call__(input['image'])
         if result is input['image']:  # not transformed
             return input
@@ -189,10 +180,6 @@ class RandomAffine(transforms.RandomAffine):
                 x_max, y_max, _ = pt.max(dim=1).values
                 input['bbox'][i, :] = torch.FloatTensor([x_min, y_min, x_max, y_max])
 
-        # if 'tr_param' not in input:
-        #     input['tr_param'] = []
-        # input['tr_param'].append({'random_affine': matrix[:2, :].tolist()})
-
         return input
 
 
@@ -211,12 +198,10 @@ def get_transform(split, input_size=512):
 
     if split in ('train', 'trainval'):
         transform = Compose([
-            # ColorJitter(brightness=0.5, saturation=0.5),  # before normalization
             ToTensor(),
             Normalize(mean, sdev),  # first normalize so that the mean is ~0
             SquarePad(),  # zero pad (approx mean pixel value)
             Resize(size=(input_size, input_size)),
-            # RandomHorizontalFlip(p=0.5),
             RandomAffine(degrees=5, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             NormalizeBoxCoords(),
         ])
@@ -250,7 +235,7 @@ def denormalize(img):
 
 
 def undo_box_transforms(bbox, tr_param):
-    # undo validation mode transformations
+    """Undo validation mode transformations."""
     bbox = bbox.clone()
     for tr in tr_param[::-1]:
         if 'resize' in tr:
