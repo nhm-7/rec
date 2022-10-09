@@ -10,40 +10,8 @@ from torchvision.models import detection
 from backbones import get_backbone
 from embeddings import Box8PositionEmbedding2D
 from transformers_pos import TransformerEncoder, TransformerEncoderLayer
-
-
-EPS = 1e-5
-
-TRANSFORMER_MODEL = 'bert-base-uncased'
-
-
-def get_tokenizer(cache=None):
-    if cache is None:
-        return transformers.BertTokenizer.from_pretrained(TRANSFORMER_MODEL)
-
-    model_path = os.path.join(cache, TRANSFORMER_MODEL)
-    os.makedirs(model_path, exist_ok=True)
-
-    if os.path.exists(os.path.join(model_path, 'config.json')):
-        return transformers.BertTokenizer.from_pretrained(model_path)
-
-    tokenizer = transformers.BertTokenizer.from_pretrained(TRANSFORMER_MODEL)
-    tokenizer.save_pretrained(model_path)
-
-    return tokenizer
-
-
-def weight_init(m):
-    if isinstance(m, nn.Conv2d):
-        nn.init.xavier_normal_(m.weight, gain=nn.init.calculate_gain('relu'))
-        if m.bias is not None:
-            nn.init.zeros_(m.bias)
-    elif isinstance(m, nn.Linear):
-        nn.init.xavier_normal_(m.weight)
-        if m.bias is not None:
-            nn.init.zeros_(m.bias)
-    elif isinstance(m, nn.Embedding):
-        nn.init.xavier_normal_(m.weight)
+from settings import TRANSFORMER_MODEL, EPS
+from utils import weight_init
 
 
 class ImageEncoder(nn.Module):

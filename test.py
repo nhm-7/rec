@@ -4,8 +4,7 @@ import torch
 import transformers
 from torchvision.ops import box_iou
 
-from encoders import get_tokenizer
-from utils import cprint, progressbar
+from utils import cprint, progressbar, get_tokenizer
 import models as m
 from transforms import get_transform, undo_box_transforms_batch
 from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg

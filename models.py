@@ -10,14 +10,15 @@ from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 
-import encoders as enc
-from encoders import weight_init
-from utils import conv3x3
+from utils import conv3x3, weight_init
 from embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
 from losses import GIoULoss, FocalLoss, SoftDiceLoss
 from transforms import undo_box_transforms_batch, denormalize
 from transformers_pos import (
     XTransformerEncoder, TransformerEncoder, TransformerEncoderLayer,
+)
+from encoders import (
+    TransformerImageEncoder, FPNImageEncoder, ImageEncoder, LanguageEncoder
 )
 
 
@@ -29,21 +30,21 @@ class IntuitionKillingMachine(nn.Module):
         super().__init__()
 
         if backbone.endswith('+tr'):
-            self.vis_enc = enc.TransformerImageEncoder(
+            self.vis_enc = TransformerImageEncoder(
                 backbone=backbone.rstrip('+tr'),
                 out_channels=embedding_size,
                 pretrained=pretrained,
             )
 
         elif backbone.endswith('+fpn'):
-            self.vis_enc = enc.FPNImageEncoder(
+            self.vis_enc = FPNImageEncoder(
                 backbone=backbone.rstrip('+fpn'),
                 out_channels=embedding_size,
                 pretrained=pretrained,
                 with_pos=False
             )
         else:
-            self.vis_enc = enc.ImageEncoder(
+            self.vis_enc = ImageEncoder(
                 backbone=backbone,
                 out_channels=embedding_size,
                 pretrained=pretrained,
@@ -59,7 +60,7 @@ class IntuitionKillingMachine(nn.Module):
             embedding_dim=embedding_size
         )
 
-        self.lan_enc = enc.LanguageEncoder(
+        self.lan_enc = LanguageEncoder(
             out_features=embedding_size,
             global_pooling=False,
             dropout_p=dropout_p
@@ -127,7 +128,7 @@ class IntuitionKillingMachine(nn.Module):
                 ids += [id(p) for p in self.vis_enc.encoder.parameters()]
 
         if slow_language_backbone:
-            if isinstance(self.lan_enc, enc.LanguageEncoder):
+            if isinstance(self.lan_enc, LanguageEncoder):
                 ids += [id(p) for p in self.lan_enc.language_model.parameters()]
             else:
                 ids += [id(p) for p in self.lan_enc.embeddings.parameters()]

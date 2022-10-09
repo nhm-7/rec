@@ -1,14 +1,18 @@
+import os
 import torch
 import gzip
 import json
 import time
 import numpy as np
+import transformers
 
 from tqdm import tqdm
 from torch import nn
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from colorama import Fore, Style, init
+
+from settings import TRANSFORMER_MODEL
 
 
 init()
@@ -18,6 +22,35 @@ __color_table__ = {
     "green": Fore.LIGHTGREEN_EX,
     "blue": Fore.LIGHTBLUE_EX,
 }
+
+
+def weight_init(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.xavier_normal_(m.weight, gain=nn.init.calculate_gain('relu'))
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        nn.init.xavier_normal_(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Embedding):
+        nn.init.xavier_normal_(m.weight)
+
+
+def get_tokenizer(cache=None):
+    if cache is None:
+        return transformers.BertTokenizer.from_pretrained(TRANSFORMER_MODEL)
+
+    model_path = os.path.join(cache, TRANSFORMER_MODEL)
+    os.makedirs(model_path, exist_ok=True)
+
+    if os.path.exists(os.path.join(model_path, 'config.json')):
+        return transformers.BertTokenizer.from_pretrained(model_path)
+
+    tokenizer = transformers.BertTokenizer.from_pretrained(TRANSFORMER_MODEL)
+    tokenizer.save_pretrained(model_path)
+
+    return tokenizer
 
 
 def conv3x3(in_channels, out_channels, num_groups=0):

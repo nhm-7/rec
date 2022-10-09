@@ -9,10 +9,9 @@ import pytorch_lightning as pl
 from parser import ArgumentParser
 
 import models as m
-from utils import cprint
+from utils import cprint, get_tokenizer
 from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
 from transforms import get_transform
-from encoders import get_tokenizer
 
 
 def run(args):
