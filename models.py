@@ -113,9 +113,6 @@ class IntuitionKillingMachine(nn.Module):
 
         self.embedding_size = embedding_size
 
-    # def slow_param_ids(self, **kwargs):
-    #     return []
-
     def slow_param_ids(self, slow_visual_backbone=True, slow_language_backbone=True):
         ids = []
 
