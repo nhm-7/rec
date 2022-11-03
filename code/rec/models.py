@@ -10,14 +10,14 @@ from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 
-from utils import conv3x3, weight_init
-from embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
-from losses import GIoULoss, FocalLoss, SoftDiceLoss
-from transforms import undo_box_transforms_batch, denormalize
-from transformers_pos import (
+from rec.utils import conv3x3, weight_init
+from rec.embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
+from rec.losses import GIoULoss, FocalLoss, SoftDiceLoss
+from rec.transforms import undo_box_transforms_batch, denormalize
+from rec.transformers_pos import (
     XTransformerEncoder, TransformerEncoder, TransformerEncoderLayer,
 )
-from encoders import (
+from rec.encoders import (
     TransformerImageEncoder, FPNImageEncoder, ImageEncoder, LanguageEncoder
 )
 

@@ -9,7 +9,7 @@ from PIL import Image
 from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, clip_boxes_to_image
 
-from utils import progressbar
+from rec.utils import progressbar
 
 
 def collate_fn(batch):

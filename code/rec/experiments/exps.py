@@ -1,5 +1,5 @@
 """Experiments list."""
-from rec.experiments.base import base_experiment
+#from rec.experiments.base import base_experiment
 
 from yaer.base import experiment
 
@@ -9,4 +9,4 @@ from yaer.base import experiment
 })
 def exp_001():
     """Default experiment arguments."""
-    base_experiment()
+    raise NotImplementedError

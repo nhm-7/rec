@@ -6,7 +6,7 @@ from torch import Tensor
 from torch import nn
 from torch.nn import functional as F
 
-from utils import conv3x3
+from rec.utils import conv3x3
 
 
 class XTransformerEncoder(nn.Module):

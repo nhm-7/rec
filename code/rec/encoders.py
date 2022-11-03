@@ -7,11 +7,11 @@ from collections import OrderedDict
 from torch import nn
 from torchvision.models import detection
 
-from backbones import get_backbone
-from embeddings import Box8PositionEmbedding2D
-from transformers_pos import TransformerEncoder, TransformerEncoderLayer
-from settings import TRANSFORMER_MODEL, EPS
-from utils import weight_init
+from rec.backbones import get_backbone
+from rec.embeddings import Box8PositionEmbedding2D
+from rec.transformers_pos import TransformerEncoder, TransformerEncoderLayer
+from rec.settings import TRANSFORMER_MODEL, EPS
+from rec.utils import weight_init
 
 
 class ImageEncoder(nn.Module):

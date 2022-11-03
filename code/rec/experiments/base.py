@@ -7,11 +7,11 @@ import torch
 
 import pytorch_lightning as pl
 
-import models as m
-from parser import ArgumentParser
-from utils import cprint, get_tokenizer
-from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
-from transforms import get_transform
+import rec.models as m
+from rec.parser import ArgumentParser
+from rec.utils import cprint, get_tokenizer
+from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
+from rec.transforms import get_transform
 
 
 def run(args):

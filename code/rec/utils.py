@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from colorama import Fore, Style, init
 
-from settings import TRANSFORMER_MODEL
+from rec.settings import TRANSFORMER_MODEL
 
 
 init()
