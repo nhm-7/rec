@@ -150,14 +150,12 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--gpus',
             help='GPUs identifiers',
-            type=str,
-            default='0'
+            type=str
         )
         group.add_argument(
             '--num-workers',
             help='dataloader num workers',
-            type=int,
-            default=20
+            type=int
         )
         group.add_argument(
             '--seed',
@@ -179,8 +177,7 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument(
             '--debug',
             help='if set, run on a small percentage of the (training) data',
-            action='store_true',
-            default=True
+            action='store_true'
         )
         group.add_argument(
             '--early-stopping',
