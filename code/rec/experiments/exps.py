@@ -19,7 +19,7 @@ from yaer.base import experiment
         "input_size": 512,
     },
     "loss_args": {
-        "betta": 0.1,
+        "beta": 0.1,
         "gamma": 0.1,
         "mu": 0.1,
     },

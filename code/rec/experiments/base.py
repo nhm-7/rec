@@ -20,55 +20,55 @@ def base_experiment(
     model_args=None, data_args=None, loss_args=None, trainer_args=None,
     runtime_args=None
     ):
-    pl.seed_everything(args.seed)
+    pl.seed_everything(runtime_args["seed"])
 
-    num_workers = 0 if args.num_workers is None else args.num_workers
+    num_workers = 0 if runtime_args["num_workers"] is None else runtime_args["num_workers"]
 
     transformers.logging.set_verbosity_error()
 
     # ------------------------------------------------------------------------
 
-    tokenizer = get_tokenizer(args.cache)
+    tokenizer = get_tokenizer(runtime_args["cache"])
 
-    if args.dataset == 'vg':
+    if data_args["dataset"] == 'vg':
         vg = RegionDescriptionsVisualGnome(
             data_root='./VisualGnome',
-            transform=get_transform('train', input_size=args.input_size),  # also for validation
+            transform=get_transform('train', input_size=data_args["input_size"]),  # also for validation
             tokenizer=tokenizer,
-            max_length=args.max_length,
-            with_mask_bbox=bool(args.mu > 0.0),
+            max_length=data_args["max_length"],
+            with_mask_bbox=bool(loss_args["mu"] > 0.0),
         )
         n_train = int(0.9 * len(vg))
         n_val = max(0, len(vg) - n_train)
         datasets = torch.utils.data.random_split(
             vg, [n_train, n_val],
-            generator=torch.Generator().manual_seed(args.seed)
+            generator=torch.Generator().manual_seed(runtime_args["seed"])
         )
         datasets = {'train': datasets[0], 'val': datasets[1]}
         ds_splits = ('train', 'val')
 
     else:
-        if args.dataset == 'refclef':
+        if data_args["dataset"] == 'refclef':
             ds_class, ds_splits = RefCLEF, ('train', 'val', 'test')
-        elif args.dataset == 'refcoco':
+        elif data_args["dataset"] == 'refcoco':
             ds_class, ds_splits = RefCOCO, ('train', 'val', 'testA', 'testB')
-        elif args.dataset == 'refcoco+':
+        elif data_args["dataset"] == 'refcoco+':
             ds_class, ds_splits = RefCOCOp, ('train', 'val', 'testA', 'testB')
-        elif args.dataset == 'refcocog':
+        elif data_args["dataset"] == 'refcocog':
             ds_class, ds_splits = RefCOCOg, ('train', 'val', 'test')
         else:
             raise RuntimeError('invalid dataset')
 
-        if args.debug:
+        if runtime_args["debug"]:
             ds_splits = ds_splits[:2]  # train, val only
 
         datasets = {
             split: ds_class(
                 split,
-                transform=get_transform(split, input_size=args.input_size),
+                transform=get_transform(split, input_size=data_args["input_size"]),
                 tokenizer=tokenizer,
-                max_length=args.max_length,
-                with_mask_bbox=bool(args.mu > 0.0)
+                max_length=data_args["max_length"],
+                with_mask_bbox=bool(loss_args["mu"] > 0.0)
             ) for split in ds_splits
         }
 
@@ -76,52 +76,52 @@ def base_experiment(
     loaders = {
         split: torch.utils.data.DataLoader(
             datasets[split],
-            batch_size=args.batch_size,
+            batch_size=trainer_args["batch_size"],
             shuffle=bool(split == 'train') or bool(split == 'trainval'),
             num_workers=num_workers,
-            pin_memory=bool(torch.cuda.is_available() and args.gpus is not None),
+            pin_memory=bool(torch.cuda.is_available() and runtime_args["gpus"] is not None),
             collate_fn=collate_fn,
             drop_last=bool('test' not in split),
             persistent_workers=bool(num_workers > 0),
         ) for split in ds_splits
     }
 
-    pdata = 0.05 if args.debug else 1.0
+    pdata = 0.02 if runtime_args["debug"] else 1.0
 
     model = m.IntuitionKillingMachine(
-        backbone=args.backbone,
+        backbone=model_args["backbone"],
         pretrained=True,
-        num_heads=args.num_heads,
-        num_layers=args.num_layers,
-        num_conv=args.num_conv,
-        dropout_p=args.dropout_p,
-        segmentation_head=bool(args.mu > 0.0),
-        mask_pooling=args.mask_pooling
+        num_heads=model_args["num_heads"],
+        num_layers=model_args["num_layers"],
+        num_conv=model_args["num_conv"],
+        dropout_p=model_args["dropout_p"],
+        segmentation_head=bool(loss_args["mu"] > 0.0),
+        mask_pooling=model_args["mask_pooling"]
     )
 
     # learning rate scheduler
     scheduler_param = {}
-    if args.scheduler:
+    if trainer_args["scheduler"]:
         scheduler_param = {
-            'milestones': [int(p * args.max_epochs) for p in (0.6, 0.9)],
+            'milestones': [int(p * trainer_args["max_epochs"]) for p in (0.6, 0.9)],
             'gamma': 0.1
         }
 
     # model
     lit_model = m.LitModel(
         model=model,
-        beta=args.beta,
-        gamma=args.gamma,
-        mu=args.mu,
-        learning_rate=args.learning_rate,
-        weight_decay=args.weight_decay,
+        beta=loss_args["beta"],
+        gamma=loss_args["gamma"],
+        mu=loss_args["mu"],
+        learning_rate=trainer_args["learning_rate"],
+        weight_decay=trainer_args["weight_decay"],
         scheduler_param=scheduler_param
     )
 
-    if args.checkpoint is not None:
+    if runtime_args["checkpoint"] is not None:
         # continue training and logging on the same dir
         # WARNING: make sure you use the same model/trainer arguments
-        output_dir = os.path.dirname(args.checkpoint)
+        output_dir = os.path.dirname(runtime_args["checkpoint"])
     else:
         # output dir from input arguments
         output_dir = ArgumentParser.args_to_path(args, (
@@ -172,7 +172,7 @@ def base_experiment(
         filename='best',
         monitor='acc/val',
         mode='max',
-        save_last=args.save_last,
+        save_last=runtime_args["save_last"],
         verbose=False,
         every_n_epochs=1,
     )
@@ -186,22 +186,22 @@ def base_experiment(
     )
 
     callbacks = [lr_monitor_callback, ]
-    if not args.debug:
+    if not runtime_args["debug"]:
         callbacks.append(checkpoint_callback)
-        if args.early_stopping:
+        if runtime_args["early_stopping"]:
             callbacks.append(early_stopping_callback)
 
     profiler = None
-    if args.profile:
+    if runtime_args["profile"]:
         profiler = pl.profiler.PyTorchProfiler(
             on_trace_ready=torch.profiler.tensorboard_trace_handler(output_dir)
         )
 
     gpus, strategy = None, None
-    if args.gpus is not None:
-        gpus = [int(i) for i in args.gpus.split(',')]
+    if runtime_args["gpus"] is not None:
+        gpus = [int(i) for i in runtime_args["gpus"].split(',')]
 
-        if not args.force_ddp and len(gpus) > 1:
+        if not runtime_args["force_ddp"] and len(gpus) > 1:
             try:
                 import fairscale
             except ModuleNotFoundError:
@@ -213,7 +213,7 @@ def base_experiment(
     trainer = pl.Trainer(
         profiler=profiler,
         gpus=gpus,
-        max_epochs=args.max_epochs,
+        max_epochs=trainer_args["max_epochs"],
         benchmark=True,
         callbacks=callbacks,
         logger=logger,
@@ -221,19 +221,19 @@ def base_experiment(
         strategy=strategy,
         limit_train_batches=pdata,
         limit_val_batches=pdata,
-        accumulate_grad_batches=args.grad_steps,
-        enable_checkpointing=bool(not args.debug),
-        precision=16 if args.amp else 32,
+        accumulate_grad_batches=trainer_args["grad_steps"],
+        enable_checkpointing=bool(not runtime_args["debug"]),
+        precision=16 if runtime_args["amp"] else 32,
     )
 
     trainer.fit(
         lit_model,
         train_dataloaders=loaders['train'],
         val_dataloaders=loaders['val'],
-        ckpt_path=args.checkpoint
+        ckpt_path=runtime_args["checkpoint"]
     )
 
-    if args.debug:
+    if runtime_args["debug"]:
         return
 
     for split in [s for s in ds_splits if s not in ('train', 'val')]:
@@ -242,16 +242,3 @@ def base_experiment(
             dataloaders=loaders[split],
             ckpt_path=checkpoint_callback.best_model_path
         )
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser('Detector-free grounding')
-    parser.add_model_args()
-    parser.add_data_args()
-    parser.add_loss_args()
-    parser.add_trainer_args()
-    parser.add_runtime_args()
-    args = parser.parse_args()
-    cprint(f'{vars(args)}', color='red')
-
-    run(args)
