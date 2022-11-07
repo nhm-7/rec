@@ -6,6 +6,7 @@ import transformers
 import torch
 
 import pytorch_lightning as pl
+from yaer.base import experiment_component
 
 import rec.models as m
 from rec.parser import ArgumentParser
@@ -14,8 +15,11 @@ from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, Regio
 from rec.transforms import get_transform
 
 
-def run(args):
-
+@experiment_component
+def base_experiment(
+    model_args=None, data_args=None, loss_args=None, trainer_args=None,
+    runtime_args=None
+    ):
     pl.seed_everything(args.seed)
 
     num_workers = 0 if args.num_workers is None else args.num_workers
