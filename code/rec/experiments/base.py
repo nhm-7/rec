@@ -124,36 +124,8 @@ def base_experiment(
         output_dir = os.path.dirname(runtime_args["checkpoint"])
     else:
         # output dir from input arguments
-        output_dir = ArgumentParser.args_to_path(args, (
-            '--dataset',
-            '--max-length',
-            '--input-size',
-            '--backbone',
-            # '--language-model',
-            # '--dropout-p',
-            '--num-heads',
-            '--num-layers',
-            '--num-conv',
-            '--beta',
-            '--gamma',
-            '--mu',
-            '--mask-pooling',
-            '--learning-rate',
-            '--weight-decay',
-            '--batch-size',
-            '--grad-steps',
-            '--max-epochs',
-            '--scheduler',
-            '--early-stopping',
-            '--amp',
-            '--debug',
-        ), values_only=True)
+        output_dir = ""
     os.makedirs(output_dir, exist_ok=True)
-    cprint(f'{output_dir}', color='blue')
-
-    # log arguments for future reference
-    with open(output_dir + '.log', 'w') as fh:
-        fh.write(f'{vars(args)}')
 
     logger = pl.loggers.TensorBoardLogger(
         save_dir=output_dir,
