@@ -20,15 +20,7 @@ $ conda env create -f environments/environment.yml
 $ conda activate rec-env
 ```
 
-4) You'll also need a running version of [pytorch](https://pytorch.org/get-started/locally/). You can go to the website and choose the version that best suits your hardware. In our case, we installed as follows:
-
-```sh
-$ python3 -m pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch/
-$ python3 -m pip install torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torchvision/
-$ python3 -m pip install torchaudio==0.9.1 -f https://download.pytorch.org/whl/torchaudio/
-```
-
-5) Finally, install the requirements:
+4) You'll also need a running version of [pytorch](https://pytorch.org/get-started/locally/). You can go to the website and choose the version that best suits your hardware and edit the requirements.txt according to that. Then, install all the requirements:
 
 ```sh
 $ python3 -m pip install -r requirements.txt
@@ -39,6 +31,7 @@ $ python3 -m pip install -r requirements.txt
 Clone the [Referring Expression Dataset API](https://github.com/lichengunc/refer)
 
 ```sh
+$ cd code/rec/
 $ git clone https://github.com/lichengunc/refer.git && cd refer
 $ git checkout python3
 ```
