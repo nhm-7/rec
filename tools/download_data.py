@@ -13,13 +13,13 @@ SETTINGS_REFER = {
     "bvision_base": "https://bvisionweb1.cs.unc.edu/licheng/referit/data/",
     "datasets": ['refclef', 'refcoco', 'refcoco+', 'refcocog'],
     "keys": ['20220413011817', '20220413011718', '20220413011656', '20220413012904'],
-    "unzip_path": pathlib.Path('./refer/data/')
+    "unzip_path": pathlib.Path('./code/rec/refer/data/')
 }
 SETTINGS_MSCOCO = {
     "img_base": "http://images.cocodataset.org/zips/",
     "datasets": ['train2014', 'val2014', 'test2014'],
-    "unzip_path": {'annotations': pathlib.Path('./refer/data/mscoco/'),
-                    'images': pathlib.Path('./refer/data/images/mscoco/')}
+    "unzip_path": {'annotations': pathlib.Path('./code/rec/refer/data/mscoco/'),
+                    'images': pathlib.Path('./code/rec/refer/data/images/mscoco/')}
 }
 
 
