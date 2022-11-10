@@ -6,6 +6,7 @@ import transformers
 import torch
 
 import pytorch_lightning as pl
+from typing import Dict
 from yaer.base import experiment_component
 
 import rec.models as m
@@ -16,20 +17,11 @@ from rec.transforms import get_transform
 
 
 @experiment_component
-def base_experiment(
-    model_args=None, data_args=None, loss_args=None, trainer_args=None,
-    runtime_args=None
-    ):
-    pl.seed_everything(runtime_args["seed"])
-
-    num_workers = 0 if runtime_args["num_workers"] is None else runtime_args["num_workers"]
-
-    transformers.logging.set_verbosity_error()
-
-    # ------------------------------------------------------------------------
-
-    tokenizer = get_tokenizer(runtime_args["cache"])
-
+def get_datasets_splits(
+    tokenizer, data_args: Dict = None,
+    loss_args: Dict = None, runtime_args: Dict = None
+    ) -> tuple:
+    """Get datasets and splits based on the arguments."""
     if data_args["dataset"] == 'vg':
         vg = RegionDescriptionsVisualGnome(
             data_root='./VisualGnome',
@@ -46,7 +38,6 @@ def base_experiment(
         )
         datasets = {'train': datasets[0], 'val': datasets[1]}
         ds_splits = ('train', 'val')
-
     else:
         if data_args["dataset"] == 'refclef':
             ds_class, ds_splits = RefCLEF, ('train', 'val', 'test')
@@ -71,7 +62,20 @@ def base_experiment(
                 with_mask_bbox=bool(loss_args["mu"] > 0.0)
             ) for split in ds_splits
         }
+    return datasets, ds_splits
 
+
+@experiment_component
+def base_experiment(
+    model_args=None, loss_args=None, trainer_args=None,
+    runtime_args=None
+    ):
+    num_workers = runtime_args["num_workers"]
+    pl.seed_everything(runtime_args["seed"])
+    transformers.logging.set_verbosity_error()
+
+    tokenizer = get_tokenizer(runtime_args["cache"])
+    datasets, ds_splits = get_datasets_splits(tokenizer)
     # data loaders
     loaders = {
         split: torch.utils.data.DataLoader(
