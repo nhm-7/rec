@@ -66,29 +66,35 @@ def get_datasets_splits(
 
 
 @experiment_component
+def get_data_loaders(
+    datasets: Dict, ds_splits: tuple,
+    runtime_args: Dict = None, trainer_args: Dict = None
+    ) -> Dict[torch.utils.data.DataLoader]:
+    return {
+        split: torch.utils.data.DataLoader(
+            datasets[split],
+            batch_size=trainer_args["batch_size"],
+            shuffle=bool(split == 'train') or bool(split == 'trainval'),
+            num_workers=runtime_args["num_workers"],
+            pin_memory=bool(torch.cuda.is_available() and runtime_args["gpus"] is not None),
+            collate_fn=collate_fn,
+            drop_last=bool('test' not in split),
+            persistent_workers=bool(runtime_args["num_workers"] > 0),
+        ) for split in ds_splits
+    }
+
+
+@experiment_component
 def base_experiment(
     model_args=None, loss_args=None, trainer_args=None,
     runtime_args=None
     ):
-    num_workers = runtime_args["num_workers"]
     pl.seed_everything(runtime_args["seed"])
     transformers.logging.set_verbosity_error()
 
     tokenizer = get_tokenizer(runtime_args["cache"])
     datasets, ds_splits = get_datasets_splits(tokenizer)
-    # data loaders
-    loaders = {
-        split: torch.utils.data.DataLoader(
-            datasets[split],
-            batch_size=trainer_args["batch_size"],
-            shuffle=bool(split == 'train') or bool(split == 'trainval'),
-            num_workers=num_workers,
-            pin_memory=bool(torch.cuda.is_available() and runtime_args["gpus"] is not None),
-            collate_fn=collate_fn,
-            drop_last=bool('test' not in split),
-            persistent_workers=bool(num_workers > 0),
-        ) for split in ds_splits
-    }
+    loaders = get_data_loaders(datasets, ds_splits)
 
     pdata = 0.02 if runtime_args["debug"] else 1.0
 
