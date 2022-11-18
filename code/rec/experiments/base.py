@@ -69,7 +69,7 @@ def get_datasets_splits(
 def get_data_loaders(
     datasets: Dict, ds_splits: tuple,
     runtime_args: Dict = None, trainer_args: Dict = None
-    ) -> Dict[torch.utils.data.DataLoader]:
+    ) -> Dict[str, torch.utils.data.DataLoader]:
     return {
         split: torch.utils.data.DataLoader(
             datasets[split],
