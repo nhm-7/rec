@@ -86,17 +86,15 @@ def get_data_loaders(
 
 @experiment_component
 def base_experiment(
-    model_args=None, loss_args=None, trainer_args=None,
-    runtime_args=None
-    ):
+    model_args: Dict = None, loss_args: Dict = None,
+    trainer_args: Dict = None, runtime_args: Dict = None
+    ) -> None:
     pl.seed_everything(runtime_args["seed"])
     transformers.logging.set_verbosity_error()
 
     tokenizer = get_tokenizer(runtime_args["cache"])
     datasets, ds_splits = get_datasets_splits(tokenizer)
     loaders = get_data_loaders(datasets, ds_splits)
-
-    pdata = 0.02 if runtime_args["debug"] else 1.0
 
     model = m.IntuitionKillingMachine(
         backbone=model_args["backbone"],
@@ -201,8 +199,8 @@ def base_experiment(
         logger=logger,
         log_every_n_steps=100,
         strategy=strategy,
-        limit_train_batches=pdata,
-        limit_val_batches=pdata,
+        limit_train_batches=runtime_args["pdata"],
+        limit_val_batches=runtime_args["pdata"],
         accumulate_grad_batches=trainer_args["grad_steps"],
         enable_checkpointing=bool(not runtime_args["debug"]),
         precision=16 if runtime_args["amp"] else 32,

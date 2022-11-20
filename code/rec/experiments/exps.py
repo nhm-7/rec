@@ -43,7 +43,8 @@ from yaer.base import experiment
         "force_ddp": False,
         "profile": False,
         "checkpoint": None,
-        "save_last": False
+        "save_last": False,
+        "pdata": 0.02
     }
 })
 def exp_001():
