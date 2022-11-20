@@ -29,7 +29,58 @@ from yaer.base import experiment
         "batch_size": 16,
         "grad_steps": 1,
         "max_epochs": 1,
-        "scheduler": False,
+        "scheduler": lambda _: {},
+    },
+    "runtime_args": {
+        "gpus": "0",
+        "num_workers": 20,
+        "seed": 3407,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": True,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": None,
+        "save_last": False,
+        "pdata": 0.02,
+    }
+})
+def exp_001():
+    """Default experiment arguments."""
+    base_experiment()
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 6,
+    },
+    "data_args": {
+        "dataset": "refcoco",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.1,
+    },
+    "trainer_args": {
+        "learning_rate": 1e-4,
+        "weight_decay": 0.0,
+        "batch_size": 16,
+        "grad_steps": 1,
+        "max_epochs": 1,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        },
     },
     "runtime_args": {
         "gpus": "0",
@@ -47,6 +98,6 @@ from yaer.base import experiment
         "pdata": 0.02
     }
 })
-def exp_001():
-    """Default experiment arguments."""
+def exp_002():
+    """Exp 002 with scheduler."""
     base_experiment()

@@ -107,14 +107,6 @@ def base_experiment(
         mask_pooling=model_args["mask_pooling"]
     )
 
-    # learning rate scheduler
-    scheduler_param = {}
-    if trainer_args["scheduler"]:
-        scheduler_param = {
-            'milestones': [int(p * trainer_args["max_epochs"]) for p in (0.6, 0.9)],
-            'gamma': 0.1
-        }
-
     # model
     lit_model = m.LitModel(
         model=model,
@@ -123,9 +115,9 @@ def base_experiment(
         mu=loss_args["mu"],
         learning_rate=trainer_args["learning_rate"],
         weight_decay=trainer_args["weight_decay"],
-        scheduler_param=scheduler_param
+        scheduler_param=trainer_args["scheduler"](trainer_args["max_epochs"])
     )
-
+    assert False
     if runtime_args["checkpoint"] is not None:
         # continue training and logging on the same dir
         # WARNING: make sure you use the same model/trainer arguments
