@@ -4,6 +4,9 @@ import io
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+
+from yaer.base import experiment_component
+from typing import Dict
 from torch import nn
 from PIL import Image
 from torchvision.transforms import ToTensor
@@ -405,3 +408,29 @@ class LitModel(pl.LightningModule):
         }
 
         return [optimizer, ], [scheduler, ]
+
+@experiment_component
+def lit_model_factory(
+    trainer_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
+    ) -> LitModel:
+    model = IntuitionKillingMachine(
+        backbone=model_args["backbone"],
+        pretrained=True,
+        num_heads=model_args["num_heads"],
+        num_layers=model_args["num_layers"],
+        num_conv=model_args["num_conv"],
+        dropout_p=model_args["dropout_p"],
+        segmentation_head=bool(loss_args["mu"] > 0.0),
+        mask_pooling=model_args["mask_pooling"]
+    )
+    # model
+    lit_model = LitModel(
+        model=model,
+        beta=loss_args["beta"],
+        gamma=loss_args["gamma"],
+        mu=loss_args["mu"],
+        learning_rate=trainer_args["learning_rate"],
+        weight_decay=trainer_args["weight_decay"],
+        scheduler_param=trainer_args["scheduler"](trainer_args["max_epochs"])
+    )
+    return lit_model

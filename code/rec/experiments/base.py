@@ -6,10 +6,9 @@ import transformers
 import torch
 
 import pytorch_lightning as pl
-from typing import Dict
+from typing import Dict, Any
 from yaer.base import experiment_component
 
-import rec.models as m
 from rec.parser import ArgumentParser
 from rec.utils import cprint, get_tokenizer
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
@@ -86,7 +85,7 @@ def get_data_loaders(
 
 @experiment_component
 def base_experiment(
-    model_args: Dict = None, loss_args: Dict = None,
+    model_factory: Any, model_args: Dict = None, loss_args: Dict = None,
     trainer_args: Dict = None, runtime_args: Dict = None
     ) -> None:
     pl.seed_everything(runtime_args["seed"])
@@ -96,28 +95,8 @@ def base_experiment(
     datasets, ds_splits = get_datasets_splits(tokenizer)
     loaders = get_data_loaders(datasets, ds_splits)
 
-    model = m.IntuitionKillingMachine(
-        backbone=model_args["backbone"],
-        pretrained=True,
-        num_heads=model_args["num_heads"],
-        num_layers=model_args["num_layers"],
-        num_conv=model_args["num_conv"],
-        dropout_p=model_args["dropout_p"],
-        segmentation_head=bool(loss_args["mu"] > 0.0),
-        mask_pooling=model_args["mask_pooling"]
-    )
+    model = model_factory()
 
-    # model
-    lit_model = m.LitModel(
-        model=model,
-        beta=loss_args["beta"],
-        gamma=loss_args["gamma"],
-        mu=loss_args["mu"],
-        learning_rate=trainer_args["learning_rate"],
-        weight_decay=trainer_args["weight_decay"],
-        scheduler_param=trainer_args["scheduler"](trainer_args["max_epochs"])
-    )
-    assert False
     if runtime_args["checkpoint"] is not None:
         # continue training and logging on the same dir
         # WARNING: make sure you use the same model/trainer arguments
@@ -199,7 +178,7 @@ def base_experiment(
     )
 
     trainer.fit(
-        lit_model,
+        model,
         train_dataloaders=loaders['train'],
         val_dataloaders=loaders['val'],
         ckpt_path=runtime_args["checkpoint"]
