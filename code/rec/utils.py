@@ -69,11 +69,6 @@ def cprint(*parg, **kwargs):
     print(Style.RESET_ALL)
 
 
-def timestamp():
-    fmt = "%Y%m%d_%H%M%S"
-    return datetime.now().strftime(fmt)
-
-
 def hms():
     return time.strftime("%H:%M:%S", time.gmtime(time.time()))
 
