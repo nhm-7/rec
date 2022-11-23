@@ -1,5 +1,5 @@
 """Experiments list."""
-from rec.experiments.base import base_experiment
+from rec.experiments.base import run_experiment
 from rec.models import lit_model_factory
 
 from yaer.base import experiment
@@ -50,7 +50,7 @@ from yaer.base import experiment
 })
 def exp_001():
     """Default experiment arguments."""
-    base_experiment(model_factory=lit_model_factory)
+    run_experiment(model_factory=lit_model_factory)
 
 
 @experiment({
@@ -101,4 +101,4 @@ def exp_001():
 })
 def exp_002():
     """Exp 002 with scheduler."""
-    base_experiment(model_factory=lit_model_factory)
+    run_experiment(model_factory=lit_model_factory)

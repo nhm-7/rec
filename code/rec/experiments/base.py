@@ -84,7 +84,7 @@ def get_data_loaders(
 
 
 @experiment_component
-def base_experiment(
+def run_experiment(
     model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None
     ) -> None:
     pl.seed_everything(runtime_args["seed"])
