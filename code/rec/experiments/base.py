@@ -85,7 +85,8 @@ def get_data_loaders(
 
 @experiment_component
 def run_experiment(
-    model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None
+    model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None,
+    data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
     ) -> None:
     pl.seed_everything(runtime_args["seed"])
     transformers.logging.set_verbosity_error()
