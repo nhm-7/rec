@@ -89,31 +89,30 @@ def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> list:
         logging_interval='step',
         log_momentum=False,
     )
-
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        dirpath=output_full_dir,
-        filename='best',
-        monitor='acc/val',
-        mode='max',
-        save_last=runtime_args["save_last"],
-        verbose=False,
-        every_n_epochs=1,
-    )
-
-    early_stopping_callback = pl.callbacks.EarlyStopping(
-        monitor='acc/val',
-        min_delta=0.0,
-        patience=5,
-        verbose=False,
-        mode='max'
-    )
-
     callbacks = [lr_monitor_callback, ]
+    best_model_path = None
     if not runtime_args["debug"]:
+        checkpoint_callback = pl.callbacks.ModelCheckpoint(
+            dirpath=output_full_dir,
+            filename='best',
+            monitor='acc/val',
+            mode='max',
+            save_last=runtime_args["save_last"],
+            verbose=False,
+            every_n_epochs=1,
+        )
         callbacks.append(checkpoint_callback)
+        best_model_path = checkpoint_callback.best_model_path
         if runtime_args["early_stopping"]:
+            early_stopping_callback = pl.callbacks.EarlyStopping(
+                monitor='acc/val',
+                min_delta=0.0,
+                patience=5,
+                verbose=False,
+                mode='max'
+            )
             callbacks.append(early_stopping_callback)
-    return callbacks
+    return callbacks, best_model_path
 
 
 @experiment_component
@@ -140,7 +139,7 @@ def run_experiment(
         version='',
         default_hp_metric=False
     )
-    callbacks = get_callbacks(output_full_dir)
+    callbacks, best_model_path = get_callbacks(output_full_dir)
 
     profiler = None
     if runtime_args["profile"]:
@@ -191,5 +190,5 @@ def run_experiment(
         print(f'evaluating \'{split}\' split ...')
         trainer.test(
             dataloaders=loaders[split],
-            ckpt_path=checkpoint_callback.best_model_path
+            ckpt_path=best_model_path
         )
