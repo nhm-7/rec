@@ -9,8 +9,8 @@ import pytorch_lightning as pl
 from typing import Dict, Any
 from yaer.base import experiment_component
 
-from rec.parser import ArgumentParser
-from rec.utils import cprint, get_tokenizer
+from rec.utils import get_tokenizer
+from rec.settings import MODELS_OUTPUT
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
 from rec.transforms import get_transform
 
@@ -84,42 +84,14 @@ def get_data_loaders(
 
 
 @experiment_component
-def run_experiment(
-    model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None,
-    data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
-    ) -> None:
-    pl.seed_everything(runtime_args["seed"])
-    transformers.logging.set_verbosity_error()
-
-    tokenizer = get_tokenizer(runtime_args["cache"])
-    datasets, ds_splits = get_datasets_splits(tokenizer)
-    loaders = get_data_loaders(datasets, ds_splits)
-
-    model = model_factory()
-
-    if runtime_args["checkpoint"] is not None:
-        # continue training and logging on the same dir
-        # WARNING: make sure you use the same model/trainer arguments
-        output_dir = os.path.dirname(runtime_args["checkpoint"])
-    else:
-        # output dir from input arguments
-        output_dir = ""
-    os.makedirs(output_dir, exist_ok=True)
-
-    logger = pl.loggers.TensorBoardLogger(
-        save_dir=output_dir,
-        name='',
-        version='',
-        default_hp_metric=False
-    )
-
+def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> list:
     lr_monitor_callback = pl.callbacks.LearningRateMonitor(
         logging_interval='step',
         log_momentum=False,
     )
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        dirpath=output_dir,
+        dirpath=output_full_dir,
         filename='best',
         monitor='acc/val',
         mode='max',
@@ -141,11 +113,39 @@ def run_experiment(
         callbacks.append(checkpoint_callback)
         if runtime_args["early_stopping"]:
             callbacks.append(early_stopping_callback)
+    return callbacks
+
+
+@experiment_component
+def run_experiment(
+    model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None,
+    data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
+    ) -> None:
+    pl.seed_everything(runtime_args["seed"])
+    transformers.logging.set_verbosity_error()
+
+    tokenizer = get_tokenizer(runtime_args["cache"])
+    datasets, ds_splits = get_datasets_splits(tokenizer)
+    loaders = get_data_loaders(datasets, ds_splits)
+
+    model = model_factory()
+    output_full_dir = os.path.join(MODELS_OUTPUT, runtime_args["output_dir"])
+    os.makedirs(output_full_dir, exist_ok=True)
+    with open(os.path.join(output_full_dir, 'params.log'), 'w') as fh:
+        fh.write(f'{trainer_args | runtime_args | data_args | loss_args | model_args}')
+
+    logger = pl.loggers.TensorBoardLogger(
+        save_dir=output_full_dir,
+        name='',
+        version='',
+        default_hp_metric=False
+    )
+    callbacks = get_callbacks(output_full_dir)
 
     profiler = None
     if runtime_args["profile"]:
         profiler = pl.profiler.PyTorchProfiler(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(output_dir)
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(output_full_dir)
         )
 
     gpus, strategy = None, None

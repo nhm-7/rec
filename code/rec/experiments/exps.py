@@ -46,6 +46,7 @@ from yaer.base import experiment
         "checkpoint": None,
         "save_last": False,
         "pdata": 0.02,
+        "output_dir": "exp_001",
     }
 })
 def exp_001():
@@ -96,7 +97,8 @@ def exp_001():
         "profile": False,
         "checkpoint": None,
         "save_last": False,
-        "pdata": 0.02
+        "pdata": 0.02,
+        "output_dir": "exp_002"
     }
 })
 def exp_002():
