@@ -7,3 +7,4 @@ cache
 refer
 *src
 *.egg*
+*models*
