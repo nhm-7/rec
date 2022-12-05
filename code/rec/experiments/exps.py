@@ -137,19 +137,19 @@ def exp_002():
         "scheduler": lambda _: {},
     },
     "runtime_args": {
-        "gpus": "0",
+        "gpus": "0,1",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
-        "debug": True,
+        "debug": False,
         "early_stopping": False,
         "amp": False,
         "force_ddp": False,
         "profile": False,
         "checkpoint": None,
         "save_last": False,
-        "pdata": 0.02,
+        "pdata": 1,
         "output_dir": "exp_003",
     }
 })
