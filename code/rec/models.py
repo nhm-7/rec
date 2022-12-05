@@ -29,7 +29,7 @@ class IntuitionKillingMachine(nn.Module):
     def __init__(self,
                  backbone='resnet50', pretrained=True, embedding_size=256,
                  num_heads=8, num_layers=6, num_conv=4, dropout_p=0.1,
-                 segmentation_head=True, mask_pooling=True):
+                 segmentation_head=True, mask_pooling=True, use_visual_embeddings=True):
         super().__init__()
 
         if backbone.endswith('+tr'):
@@ -121,6 +121,7 @@ class IntuitionKillingMachine(nn.Module):
             raise RuntimeError('mask pooling w/o a segmentation head does not makes sense')
 
         self.embedding_size = embedding_size
+        self.use_visual_embeddings = use_visual_embeddings
 
     def slow_param_ids(self, slow_visual_backbone=True, slow_language_backbone=True):
         ids = []
@@ -164,6 +165,7 @@ class IntuitionKillingMachine(nn.Module):
         N, D, H, W = x.size()  # save dims before flatten
 
         x = self.flatten(x)  # NxRxD
+        x = x * self.use_visual_embeddings
         x_mask = self.flatten(x_mask).squeeze(-1)  # NxR
         x_pos = self.flatten(x_pos)   # NxRxD
 
@@ -421,7 +423,8 @@ def lit_model_factory(
         num_conv=model_args["num_conv"],
         dropout_p=model_args["dropout_p"],
         segmentation_head=bool(loss_args["mu"] > 0.0),
-        mask_pooling=model_args["mask_pooling"]
+        mask_pooling=model_args["mask_pooling"],
+        use_visual_embeddings=model_args["use_visual_embeddings"]
     )
     # model
     lit_model = LitModel(
