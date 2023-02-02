@@ -16,7 +16,7 @@ from yaer.base import experiment
         "use_visual_embeddings": True,
     },
     "data_args": {
-        "dataset": "refcoco",
+        "dataset": "refclef",
         "max_length": 32,
         "input_size": 512,
     },
@@ -34,12 +34,12 @@ from yaer.base import experiment
         "scheduler": lambda _: {},
     },
     "runtime_args": {
-        "gpus": "0",
+        "gpus": None,
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
-        "debug": True,
+        "debug": False,
         "early_stopping": False,
         "amp": False,
         "force_ddp": False,
@@ -51,7 +51,7 @@ from yaer.base import experiment
     }
 })
 def exp_001():
-    """Default experiment arguments."""
+    """An experiment for testing purposes."""
     run_experiment(model_factory=lit_model_factory)
 
 
