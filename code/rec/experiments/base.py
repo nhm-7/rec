@@ -4,6 +4,7 @@ detector-free referring expresion comprehension
 import os
 import transformers
 import torch
+import logging
 
 import pytorch_lightning as pl
 from typing import Dict, Any
@@ -13,6 +14,11 @@ from rec.utils import get_tokenizer
 from rec.settings import MODELS_OUTPUT
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg, RegionDescriptionsVisualGnome
 from rec.transforms import get_transform
+
+
+log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+logg = logging.getLogger(__name__)
 
 
 @experiment_component
