@@ -28,14 +28,14 @@ from yaer.base import experiment
     "trainer_args": {
         "learning_rate": 1e-4,
         "weight_decay": 0.0,
-        "batch_size": 16,
+        "batch_size": 4,
         "grad_steps": 1,
         "max_epochs": 1,
         "scheduler": lambda _: {},
     },
     "runtime_args": {
         "gpus": None,
-        "num_workers": 20,
+        "num_workers": 8,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
@@ -46,8 +46,9 @@ from yaer.base import experiment
         "profile": False,
         "checkpoint": None,
         "save_last": False,
-        "pdata": 0.02,
+        "pdata": 0.34,
         "output_dir": "exp_001",
+        "get_sample": True
     }
 })
 def exp_001():
@@ -100,7 +101,8 @@ def exp_001():
         "checkpoint": None,
         "save_last": False,
         "pdata": 0.02,
-        "output_dir": "exp_002"
+        "output_dir": "exp_002",
+        "get_sample": True
     }
 })
 def exp_002():
@@ -151,6 +153,7 @@ def exp_002():
         "save_last": False,
         "pdata": 1,
         "output_dir": "exp_003",
+        "get_sample": True
     }
 })
 def exp_003():

@@ -64,7 +64,8 @@ def get_datasets_splits(
                 transform=get_transform(split, input_size=data_args["input_size"]),
                 tokenizer=tokenizer,
                 max_length=data_args["max_length"],
-                with_mask_bbox=bool(loss_args["mu"] > 0.0)
+                with_mask_bbox=bool(loss_args["mu"] > 0.0),
+                get_sample=runtime_args["get_sample"]
             ) for split in ds_splits
         }
     return datasets, ds_splits
@@ -90,13 +91,12 @@ def get_data_loaders(
 
 
 @experiment_component
-def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> list:
+def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> dict:
     lr_monitor_callback = pl.callbacks.LearningRateMonitor(
         logging_interval='step',
         log_momentum=False,
     )
-    callbacks = [lr_monitor_callback, ]
-    best_model_path = None
+    callbacks = {'monitor': lr_monitor_callback}
     if not runtime_args["debug"]:
         checkpoint_callback = pl.callbacks.ModelCheckpoint(
             dirpath=output_full_dir,
@@ -107,8 +107,7 @@ def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> list:
             verbose=False,
             every_n_epochs=1,
         )
-        callbacks.append(checkpoint_callback)
-        best_model_path = checkpoint_callback.best_model_path
+        callbacks['checkpoint'] = checkpoint_callback
         if runtime_args["early_stopping"]:
             early_stopping_callback = pl.callbacks.EarlyStopping(
                 monitor='acc/val',
@@ -117,8 +116,8 @@ def get_callbacks(output_full_dir: str, runtime_args: Dict = None) -> list:
                 verbose=False,
                 mode='max'
             )
-            callbacks.append(early_stopping_callback)
-    return callbacks, best_model_path
+            callbacks['early_stopping'] = early_stopping_callback
+    return callbacks
 
 
 @experiment_component
@@ -145,7 +144,7 @@ def run_experiment(
         version='',
         default_hp_metric=False
     )
-    callbacks, best_model_path = get_callbacks(output_full_dir)
+    callbacks = get_callbacks(output_full_dir)
 
     profiler = None
     if runtime_args["profile"]:
@@ -171,7 +170,7 @@ def run_experiment(
         gpus=gpus,
         max_epochs=trainer_args["max_epochs"],
         benchmark=True,
-        callbacks=callbacks,
+        callbacks=list(callbacks.values()),
         logger=logger,
         log_every_n_steps=100,
         strategy=strategy,
@@ -193,8 +192,8 @@ def run_experiment(
         return
 
     for split in [s for s in ds_splits if s not in ('train', 'val')]:
-        print(f'evaluating \'{split}\' split ...')
+        logg.info(f'evaluating {split} split ...')
         trainer.test(
             dataloaders=loaders[split],
-            ckpt_path=best_model_path
+            ckpt_path=callbacks['checkpoint'].best_model_path
         )

@@ -186,7 +186,7 @@ class RegionDescriptionsVisualGnome(RECDataset):
 
 class ReferDataset(RECDataset):
     def __init__(self, data_root, dataset, split_by, split, transform=None,
-                 tokenizer=None, max_length=32, with_mask_bbox=False):
+                 tokenizer=None, max_length=32, with_mask_bbox=False, get_sample=False):
         super().__init__(transform=transform, tokenizer=tokenizer,
                          max_length=max_length, with_mask_bbox=with_mask_bbox)
 
@@ -200,7 +200,10 @@ class ReferDataset(RECDataset):
                                '(see https://github.com/lichengunc/refer)')
 
         refer = REFER(data_root, dataset, split_by)
-        ref_ids = sorted(refer.getRefIds(split=split))
+        ref_ids = refer.getRefIds(split=split)
+        if get_sample:
+            ref_ids = random.sample(ref_ids, 50)
+        ref_ids = sorted(ref_ids)
 
         self.samples = []
 
