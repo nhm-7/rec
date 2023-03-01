@@ -52,7 +52,7 @@ from yaer.base import experiment
     }
 })
 def exp_001():
-    """An experiment for testing purposes."""
+    """An experiment for testing purposes (refactors, etc)."""
     run_experiment(model_factory=lit_model_factory)
 
 
@@ -106,7 +106,7 @@ def exp_001():
     }
 })
 def exp_002():
-    """Exp 002 with scheduler."""
+    """Exp 002 with scheduler parameter defined."""
     run_experiment(model_factory=lit_model_factory)
 
 
@@ -118,7 +118,7 @@ def exp_002():
         "num_heads": 8,
         "num_layers": 6,
         "num_conv": 6,
-        "use_visual_embeddings": False,
+        "use_visual_embeddings": True,
     },
     "data_args": {
         "dataset": "refcoco",
@@ -157,5 +157,9 @@ def exp_002():
     }
 })
 def exp_003():
-    """Exp without using the visual embeddings(by not affecting the masks)."""
+    """Define an exp that is the same as the paper (referit->baseline).
+
+    Is the 20211220_201458 prefix folder name from paper's google drive versioned models.
+    The idea for this experiment is to compare its results with the reported ones in the paper.
+    """
     run_experiment(model_factory=lit_model_factory)
