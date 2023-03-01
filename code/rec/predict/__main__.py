@@ -4,11 +4,11 @@ import torch
 import transformers
 from torchvision.ops import box_iou
 
-from utils import cprint, progressbar, get_tokenizer
-import models as m
-from transforms import get_transform, undo_box_transforms_batch
-from datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
-from re_classifier import REClassifier
+from rec.utils import cprint, progressbar, get_tokenizer
+import rec.models as m
+from rec.transforms import get_transform, undo_box_transforms_batch
+from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
+from rec.predict.re_classifier import REClassifier
 
 
 @torch.no_grad()
@@ -81,7 +81,57 @@ def test(model, loader, rec, iou_threshold=0.5):
     return counts
 
 
-def run(args):
+def get_args():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Detector-free grounding (test)',
+        add_help=True,
+        allow_abbrev=False
+    )
+    parser.add_argument(
+        'checkpoint',
+        help="trained model",
+        type=str
+    )
+    parser.add_argument(
+        '--max-length',
+        help='if not set, read it from the checkpoint file',
+        type=int
+    )
+    parser.add_argument(
+        '--input-size',
+        help='if not set, read it from the checkpoint file',
+        type=int
+    )
+    parser.add_argument(
+        '--iou-threshold',
+        help='IOU threshold',
+        type=float,
+        default=0.5
+    )
+    parser.add_argument(
+        '--batch-size',
+        help='batch size',
+        type=int,
+        default=16
+    )
+    parser.add_argument(
+        '--gpus',
+        help='GPU id',
+        type=int
+    )
+    parser.add_argument(
+        '--num-workers',
+        help='dataloader num workers',
+        type=int
+    )
+    args = parser.parse_args()
+    cprint(f'{vars(args)}', color='red')
+    return args
+
+
+def run():
+    args = get_args()
 
     num_workers = 0 if args.num_workers is None else args.num_workers
 
@@ -89,7 +139,6 @@ def run(args):
 
     # ------------------------------------------------------------------------
     # parse model arguments from checkpoint path
-
     exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
     _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, _, _, mu, mask_pooling = exp_dirname.split('_')[:13]
     max_length = int(max_length) if args.max_length is None else args.max_length
@@ -104,7 +153,9 @@ def run(args):
         device = torch.device(f'cuda:{args.gpus}')
     else:
         device = torch.device('cpu')
-
+    for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
+               "mu", "mask_pooling"]:
+        print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
 
     tokenizer = get_tokenizer()
@@ -189,52 +240,3 @@ def run(args):
             )
 
     # cat LOGFILE | sed 's/\./,/g' | tail -1 | awk '{print $3" "$6" "$9" "$12" "$15}'
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Detector-free grounding (test)',
-        add_help=True,
-        allow_abbrev=False
-    )
-    parser.add_argument(
-        'checkpoint',
-        help="trained model",
-        type=str
-    )
-    parser.add_argument(
-        '--max-length',
-        help='if not set, read it from the checkpoint file',
-        type=int
-    )
-    parser.add_argument(
-        '--input-size',
-        help='if not set, read it from the checkpoint file',
-        type=int
-    )
-    parser.add_argument(
-        '--iou-threshold',
-        help='IOU threshold',
-        type=float,
-        default=0.5
-    )
-    parser.add_argument(
-        '--batch-size',
-        help='batch size',
-        type=int,
-        default=16
-    )
-    parser.add_argument(
-        '--gpus',
-        help='GPU id',
-        type=int
-    )
-    parser.add_argument(
-        '--num-workers',
-        help='dataloader num workers',
-        type=int
-    )
-    args = parser.parse_args()
-    cprint(f'{vars(args)}', color='red')
-    run(args)

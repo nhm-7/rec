@@ -117,30 +117,33 @@ def exp_002():
         "dropout_p": 0.1,
         "num_heads": 8,
         "num_layers": 6,
-        "num_conv": 6,
+        "num_conv": 0,
         "use_visual_embeddings": True,
     },
     "data_args": {
-        "dataset": "refcoco",
+        "dataset": "refclef",
         "max_length": 32,
         "input_size": 512,
     },
     "loss_args": {
         "beta": 0.1,
         "gamma": 0.1,
-        "mu": 0.1,
+        "mu": 0.0,
     },
     "trainer_args": {
-        "learning_rate": 1e-4,
+        "learning_rate": 0.0001,
         "weight_decay": 0.0,
-        "batch_size": 16,
-        "grad_steps": 1,
-        "max_epochs": 1,
-        "scheduler": lambda _: {},
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
     },
     "runtime_args": {
         "gpus": "0,1",
-        "num_workers": 20,
+        "num_workers": 10,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
@@ -151,9 +154,9 @@ def exp_002():
         "profile": False,
         "checkpoint": None,
         "save_last": False,
-        "pdata": 1,
+        "pdata": 1.0,
         "output_dir": "exp_003",
-        "get_sample": True
+        "get_sample": False
     }
 })
 def exp_003():
