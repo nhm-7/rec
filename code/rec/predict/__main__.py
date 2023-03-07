@@ -1,5 +1,6 @@
 import argparse
 import os
+import ast
 import torch
 import transformers
 from torchvision.ops import box_iou
@@ -94,6 +95,12 @@ def get_args():
         type=str
     )
     parser.add_argument(
+        '--params',
+        help="trained model parameters. If not set, parameters will be read from the checkpoint file",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
         '--max-length',
         help='if not set, read it from the checkpoint file',
         type=int
@@ -138,9 +145,18 @@ def run():
     transformers.logging.set_verbosity_error()
 
     # ------------------------------------------------------------------------
-    # parse model arguments from checkpoint path
-    exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
-    _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, _, _, mu, mask_pooling = exp_dirname.split('_')[:13]
+    if args.params:
+        # parse model arguments from a .log file
+        with open(args.params) as l:
+            for line in l:
+                params = ast.literal_eval(line)
+            dataset, max_length, input_size = params['dataset'], params['max_length'], params['input_size']
+            backbone, num_heads, num_layers = params['backbone'], params['num_heads'], params['num_layers']
+            num_conv, mu, mask_pooling = params['num_conv'], params['mu'], params['mask_pooling']
+    else:
+        # parse model arguments from checkpoint path
+        exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
+        _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, _, _, mu, mask_pooling = exp_dirname.split('_')[:13]
     max_length = int(max_length) if args.max_length is None else args.max_length
     input_size = int(input_size) if args.input_size is None else args.input_size
     num_layers = int(num_layers)
@@ -154,7 +170,7 @@ def run():
     else:
         device = torch.device('cpu')
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-               "mu", "mask_pooling"]:
+            "mu", "mask_pooling"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
 
