@@ -156,7 +156,9 @@ def run():
     else:
         # parse model arguments from checkpoint path
         exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
-        _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, _, _, mu, mask_pooling = exp_dirname.split('_')[:13]
+        _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, beta, gamma, mu, mask_pooling = exp_dirname.split('_')[:13]
+        # the order of the remaining's filename are: (learning_rate, weight_decay, batch_size, grad_steps,
+        # max_epochs, scheduler, early_stopping, amp, debug)
     max_length = int(max_length) if args.max_length is None else args.max_length
     input_size = int(input_size) if args.input_size is None else args.input_size
     num_layers = int(num_layers)
