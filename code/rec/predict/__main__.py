@@ -1,3 +1,8 @@
+"""
+Predict runner.
+Examples:
+predict ~/my_thesis/rec/models/exp_003/best.ckpt --params ~/my_thesis/rec/models/exp_003/params.log --gpus 1
+"""
 import argparse
 import os
 import ast
