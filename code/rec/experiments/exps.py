@@ -152,7 +152,7 @@ def exp_002():
         "amp": False,
         "force_ddp": False,
         "profile": False,
-        "checkpoint": None,
+        "checkpoint": True,
         "save_last": False,
         "pdata": 1.0,
         "output_dir": "exp_003",

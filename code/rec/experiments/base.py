@@ -185,7 +185,7 @@ def run_experiment(
         model,
         train_dataloaders=loaders['train'],
         val_dataloaders=loaders['val'],
-        ckpt_path=runtime_args["checkpoint"]
+        ckpt_path=(os.path.join(output_full_dir, "best.ckpt") if runtime_args["checkpoint"] else None)
     )
 
     if runtime_args["debug"]:
