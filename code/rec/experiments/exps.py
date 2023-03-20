@@ -143,7 +143,7 @@ def exp_002():
     },
     "runtime_args": {
         "gpus": "0,1",
-        "num_workers": 10,
+        "num_workers": 20,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
