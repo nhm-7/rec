@@ -7,4 +7,5 @@ cache
 refer
 *src
 *.egg*
-*models*
+models/*
+!models/.gitkeep
