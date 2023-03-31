@@ -180,9 +180,15 @@ def run_experiment(
         enable_checkpointing=bool(not runtime_args["debug"]),
         precision=16 if runtime_args["amp"] else 32,
     )
-    
-    path_ckpt = os.path.join(output_full_dir, "best.ckpt")
-    path_ckpt = (path_ckpt if runtime_args["checkpoint"] and os.path.exists(path_ckpt) else None)
+
+    last_ckpt_path = os.path.join(output_full_dir, "last.ckpt")
+    best_ckpt_path = os.path.join(output_full_dir, "best.ckpt")
+    if runtime_args["save_last"] and os.path.exists(last_ckpt_path):
+        path_ckpt = last_ckpt_path
+    elif runtime_args["checkpoint"] and os.path.exists(best_ckpt_path):
+        path_ckpt = best_ckpt_path
+    else:
+        path_ckpt = None
     trainer.fit(
         model,
         train_dataloaders=loaders['train'],

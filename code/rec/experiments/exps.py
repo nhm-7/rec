@@ -211,7 +211,7 @@ def exp_003():
         "force_ddp": False,
         "profile": False,
         "checkpoint": True,
-        "save_last": False,
+        "save_last": True,
         "pdata": 1.0,
         "output_dir": "exp_004",
         "get_sample": False
