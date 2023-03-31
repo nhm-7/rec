@@ -1,4 +1,5 @@
-"""Download the data. Use python3 `download_data_from_refer.py -d all` to download all the data."""
+"""Download the data. Use python3 `download_data_from_refer.py -d all` to download all the data.
+"""
 import argparse
 import requests
 import pathlib
@@ -20,6 +21,13 @@ SETTINGS_MSCOCO = {
     "datasets": ['train2014', 'val2014', 'test2014'],
     "unzip_path": {'annotations': pathlib.Path('./code/rec/refer/data/mscoco/'),
                     'images': pathlib.Path('./code/rec/refer/data/images/mscoco/')}
+}
+SETTINGS_SAIAPR = {
+    "archive_base": "https://web.archive.org/web/",
+    "bvision_base": "https://bvisionweb1.cs.unc.edu/licheng/referit/data/images/",
+    "datasets": ['saiapr_tc-12'],
+    "keys": ['20220515000000'],
+    "unzip_path": pathlib.Path('./code/rec/refer/data/images/')
 }
 
 
@@ -109,5 +117,7 @@ if __name__ == '__main__':
         _download_ref(SETTINGS_REFER)
     elif data_to_download == 'mscoco':
         _download_mscoco(SETTINGS_MSCOCO)
+    elif data_to_download == 'saiapr':
+        _download_ref(SETTINGS_SAIAPR)
     else:
-        raise OSError("valid options are: 'all', 'ref' and 'mscoco'")
+        raise OSError("valid options are: 'all', 'ref', 'mscoco' and 'saiapr'")

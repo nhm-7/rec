@@ -16,7 +16,7 @@ $ git clone https://github.com/nhm-7/rec.git && cd rec
 3) We created a environment.yml file. You need to run the following command:
 
 ```sh
-$ conda env create -f environments/environment.yml
+$ conda env create -f environment.yml
 $ conda activate rec-env
 ```
 
@@ -40,18 +40,20 @@ and follow the instructions to access the ReferItGame (a.k.a RefCLEF), RefCOCO, 
 
 ### Download data script
 
-You can use the ```download_data.py``` script to download both refer and mscoco datasets. You just need to adapt the constants ```SETTINGS_REFER``` and ```SETTINGS_MSCOCO``` to your needs. It downloads those datasets and also unzip them to a custom path. We recommend to follow the data structure of the refer repository.
+You can use the ```download_data.py``` script to download both refer and mscoco datasets. You just need to adapt the constants ```SETTINGS_REFER```, ```SETTINGS_MSCOCO``` and  ```SETTINGS_SAIAPR``` to your needs. It downloads those datasets and also unzip them to a custom path. We recommend to follow the data structure of the refer repository.
 
 
 ## Training and validation
 
+First of all, all the experiments are configured with YAER, inside the code/rec/experiments/exps.py. So if you are thinking in writing a new experiment, you need to do there. Configure your experiment using the yaer decorator. Then, you need to be in the code/rec directory and run:
+
 Run
 
 ```sh
-$ python3 trainval.py -h
+$ yaer run -e <exp_name>
 ```
 
-for a complete list of training options.
+where <exp_name> is the name of the python function that you defined in the code/rec/experiments/exps.py file. The experiment will run and save the parameters, loggings and chekpoints by default into models/<exp_name>/ folder.
 
 
 ## Pretrained models
@@ -64,6 +66,7 @@ for a complete list of training options.
 * RefCOCO+: [baseline](https://drive.google.com/drive/folders/1KxYomKbBTBEAWeB7DrnixwBavc44KZ3p?usp=sharing), [extended]()
 * RefCOCOg: [baseline](https://drive.google.com/drive/folders/1YXw1Nt0gy34aaemOZJpigGvMq72Of2Zy?usp=sharing), [extended]()
 
+Once you download the pretrained model, you need to locate it into the models/<pretrained_full_name_folder>, where <pretrained_full_name_folder> is the name that has the pretrained paper model as default. The predict submodule will infer the parameters from this <pretrained_full_name_folder>.
 
 ## Evaluation
 
@@ -80,13 +83,14 @@ You can also use spacy, in which case you need to change the ```backend="stanza"
 $ python3 -m spacy download en_core_web_md
 ```
 
-Now, to test a trained model run:
+Now, to test a trained model you need to be inside the code/rec/ folder and run any of the following commands(depending on if you use the paper models or those that you have trained using the YAER runner):
 
 ```sh
-$ python3 test.py <MODEL.ckpt>
+$ predict ~/models/<pretrained_full_name_folder>/best.ckpt --gpus <gpu_number>
+$ predict ~/models/<exp_name>/best.ckpt --params ~/models/<exp_name>/params.log --gpus <gpu_number>
 ```
 
-The script will inferr the dataset and parameters from the file path. You can run ```-h``` and check which options are available. The test script is provided as an example use of our trained models. You can customize it to your needs.
+The script will infer the dataset and parameters from the <pretrained_full_name_folder> folder name, or will use the params.log ones. The test script is provided as an example use of our trained models. You can customize it to your needs.
 
 # Error analysis annotation
 
