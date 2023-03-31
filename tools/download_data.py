@@ -113,6 +113,7 @@ if __name__ == '__main__':
     if data_to_download == 'all':
         _download_ref(SETTINGS_REFER)
         _download_mscoco(SETTINGS_MSCOCO)
+        _download_ref(SETTINGS_SAIAPR)
     elif data_to_download == 'ref':
         _download_ref(SETTINGS_REFER)
     elif data_to_download == 'mscoco':
