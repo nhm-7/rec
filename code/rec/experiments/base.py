@@ -126,6 +126,7 @@ def run_experiment(
     data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
     ) -> None:
     pl.seed_everything(runtime_args["seed"])
+    torch.cuda.empty_cache()
     transformers.logging.set_verbosity_error()
 
     tokenizer = get_tokenizer(runtime_args["cache"])

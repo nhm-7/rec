@@ -34,9 +34,8 @@ Clone the [Referring Expression Dataset API](https://github.com/lichengunc/refer
 $ cd code/rec/
 $ git clone https://github.com/lichengunc/refer.git && cd refer
 $ git checkout python3
+$ make
 ```
-
-and follow the instructions to access the ReferItGame (a.k.a RefCLEF), RefCOCO, RefCOCO+ and RefCOCOg datasets.
 
 ### Download data script
 
