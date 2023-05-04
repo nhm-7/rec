@@ -4,20 +4,23 @@ import io
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+
+from yaer.base import experiment_component
+from typing import Dict
 from torch import nn
 from PIL import Image
 from torchvision.transforms import ToTensor
 from torchvision.ops import box_convert, box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 
-from utils import conv3x3, weight_init
-from embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
-from losses import GIoULoss, FocalLoss, SoftDiceLoss
-from transforms import undo_box_transforms_batch, denormalize
-from transformers_pos import (
-    XTransformerEncoder, TransformerEncoder, TransformerEncoderLayer,
+from rec.utils import conv3x3, weight_init
+from rec.embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
+from rec.losses import GIoULoss, FocalLoss
+from rec.transforms import undo_box_transforms_batch, denormalize
+from rec.transformers_pos import (
+    TransformerEncoder, TransformerEncoderLayer,
 )
-from encoders import (
+from rec.encoders import (
     TransformerImageEncoder, FPNImageEncoder, ImageEncoder, LanguageEncoder
 )
 
@@ -26,7 +29,7 @@ class IntuitionKillingMachine(nn.Module):
     def __init__(self,
                  backbone='resnet50', pretrained=True, embedding_size=256,
                  num_heads=8, num_layers=6, num_conv=4, dropout_p=0.1,
-                 segmentation_head=True, mask_pooling=True):
+                 segmentation_head=True, mask_pooling=True, use_visual_embeddings=True):
         super().__init__()
 
         if backbone.endswith('+tr'):
@@ -118,6 +121,7 @@ class IntuitionKillingMachine(nn.Module):
             raise RuntimeError('mask pooling w/o a segmentation head does not makes sense')
 
         self.embedding_size = embedding_size
+        self.use_visual_embeddings = use_visual_embeddings
 
     def slow_param_ids(self, slow_visual_backbone=True, slow_language_backbone=True):
         ids = []
@@ -161,6 +165,7 @@ class IntuitionKillingMachine(nn.Module):
         N, D, H, W = x.size()  # save dims before flatten
 
         x = self.flatten(x)  # NxRxD
+        x = x * self.use_visual_embeddings
         x_mask = self.flatten(x_mask).squeeze(-1)  # NxR
         x_pos = self.flatten(x_pos)   # NxRxD
 
@@ -405,3 +410,30 @@ class LitModel(pl.LightningModule):
         }
 
         return [optimizer, ], [scheduler, ]
+
+@experiment_component
+def lit_model_factory(
+    trainer_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
+    ) -> LitModel:
+    model = IntuitionKillingMachine(
+        backbone=model_args["backbone"],
+        pretrained=True,
+        num_heads=model_args["num_heads"],
+        num_layers=model_args["num_layers"],
+        num_conv=model_args["num_conv"],
+        dropout_p=model_args["dropout_p"],
+        segmentation_head=bool(loss_args["mu"] > 0.0),
+        mask_pooling=model_args["mask_pooling"],
+        use_visual_embeddings=model_args["use_visual_embeddings"]
+    )
+    # model
+    lit_model = LitModel(
+        model=model,
+        beta=loss_args["beta"],
+        gamma=loss_args["gamma"],
+        mu=loss_args["mu"],
+        learning_rate=trainer_args["learning_rate"],
+        weight_decay=trainer_args["weight_decay"],
+        scheduler_param=trainer_args["scheduler"](trainer_args["max_epochs"])
+    )
+    return lit_model

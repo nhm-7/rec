@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from colorama import Fore, Style, init
 
-from settings import TRANSFORMER_MODEL
+from rec.settings import TRANSFORMER_MODEL
 
 
 init()
@@ -67,11 +67,6 @@ def cprint(*parg, **kwargs):
     print(__color_table__[color], end="")
     print(*parg, end="")
     print(Style.RESET_ALL)
-
-
-def timestamp():
-    fmt = "%Y%m%d_%H%M%S"
-    return datetime.now().strftime(fmt)
 
 
 def hms():

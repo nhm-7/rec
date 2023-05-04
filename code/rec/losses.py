@@ -89,35 +89,3 @@ class FocalLoss(nn.Module):
             return loss.sum()
         return loss
 
-
-class SoftDiceLoss(nn.Module):
-    def __init__(self, reduction='mean'):
-        super().__init__()
-        self.reduction = reduction
-
-    def forward(self, pred, target):
-        pred = torch.sigmoid(pred)  # working with logits
-        loss = 1.0 - 2 * pred * target / (pred ** 2 + target ** 2 + 2**-23)
-        if self.reduction == 'mean':
-            return loss.mean()
-        elif self.reduction == 'sum':
-            return loss.sum()
-        return loss
-
-
-class ListNetLoss(nn.Module):
-    # Cao et al. (2007) Learning to Rank: From Pairwise Approach to Listwise Approach
-    def __init__(self, tau=1.0, reduction='mean'):
-        super().__init__()
-        self.tau = tau  # target temperature
-        self.reduction = reduction
-
-    def forward(self, pred, target):
-        p1 = F.softmax(self.tau * target, dim=1)
-        log_p2 = F.log_softmax(pred, dim=1)
-        loss = -(p1 * log_p2).sum(1)
-        if self.reduction == 'mean':
-            return loss.mean()
-        elif self.reduction == 'sum':
-            return loss.sum()
-        return loss

@@ -5,3 +5,7 @@ __pycache__
 *.log
 cache
 refer
+*src
+*.egg*
+models/*
+!models/.gitkeep

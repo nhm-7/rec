@@ -6,53 +6,7 @@ from torch import Tensor
 from torch import nn
 from torch.nn import functional as F
 
-from utils import conv3x3
-
-
-class XTransformerEncoder(nn.Module):
-    __constants__ = ['norm']
-    def __init__(self, encoder_layer, num_layers, num_conv=2, norm=None):
-        super().__init__()
-        self.layers = _get_clones(encoder_layer, num_layers)
-        self.num_layers = num_layers
-        self.norm = norm
-
-        d_model = encoder_layer.linear1.in_features
-        self.conv = nn.ModuleList([
-            nn.Sequential(*[
-                conv3x3(d_model, d_model) for _ in range(num_conv)
-            ]) for _ in range(num_layers)
-        ])
-
-    def flatten(self, x):
-        N, D, H, W = x.size()
-        x = x.to(memory_format=torch.channels_last)
-        x = x.permute(0, 2, 3, 1).view(N, H*W, D)
-        return x  # NxHWxD
-
-    def unflatten(self, x, size):
-        N, R, D = x.size()
-        H, W = size
-        assert R == H*W, 'wrong tensor size'
-        x = x.permute(0, 2, 1).to(memory_format=torch.contiguous_format)
-        x = x.view(N, D, H, W)
-        return x  # NxDxHxW
-
-    def forward(self, src: Tensor, mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None, pos: Optional[Tensor] = None, size=None) -> Tensor:
-        output = src
-
-        for i, mod in enumerate(self.layers):
-            output = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
-
-            vis = self.unflatten(output[:, :size[0]*size[1]], size)
-            vis = self.flatten(self.conv[i](vis))
-
-            output = torch.cat([vis, output[:, size[0]*size[1]:]], dim=1)
-
-        if self.norm is not None:
-            output = self.norm(output)
-
-        return output
+from rec.utils import conv3x3
 
 
 class TransformerEncoder(nn.Module):

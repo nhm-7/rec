@@ -1,4 +1,5 @@
-"""Download the data. Use python3 `download_data_from_refer.py -d all` to download all the data."""
+"""Download the data. Use python3 `download_data_from_refer.py -d all` to download all the data.
+"""
 import argparse
 import requests
 import pathlib
@@ -13,13 +14,20 @@ SETTINGS_REFER = {
     "bvision_base": "https://bvisionweb1.cs.unc.edu/licheng/referit/data/",
     "datasets": ['refclef', 'refcoco', 'refcoco+', 'refcocog'],
     "keys": ['20220413011817', '20220413011718', '20220413011656', '20220413012904'],
-    "unzip_path": pathlib.Path('./refer/data/')
+    "unzip_path": pathlib.Path('./code/rec/refer/data/')
 }
 SETTINGS_MSCOCO = {
     "img_base": "http://images.cocodataset.org/zips/",
     "datasets": ['train2014', 'val2014', 'test2014'],
-    "unzip_path": {'annotations': pathlib.Path('./refer/data/mscoco/'),
-                    'images': pathlib.Path('./refer/data/images/mscoco/')}
+    "unzip_path": {'annotations': pathlib.Path('./code/rec/refer/data/mscoco/'),
+                    'images': pathlib.Path('./code/rec/refer/data/images/mscoco/')}
+}
+SETTINGS_SAIAPR = {
+    "archive_base": "https://web.archive.org/web/",
+    "bvision_base": "https://bvisionweb1.cs.unc.edu/licheng/referit/data/images/",
+    "datasets": ['saiapr_tc-12'],
+    "keys": ['20220515000000'],
+    "unzip_path": pathlib.Path('./code/rec/refer/data/images/')
 }
 
 
@@ -105,9 +113,12 @@ if __name__ == '__main__':
     if data_to_download == 'all':
         _download_ref(SETTINGS_REFER)
         _download_mscoco(SETTINGS_MSCOCO)
+        _download_ref(SETTINGS_SAIAPR)
     elif data_to_download == 'ref':
         _download_ref(SETTINGS_REFER)
     elif data_to_download == 'mscoco':
         _download_mscoco(SETTINGS_MSCOCO)
+    elif data_to_download == 'saiapr':
+        _download_ref(SETTINGS_SAIAPR)
     else:
-        raise OSError("valid options are: 'all', 'ref' and 'mscoco'")
+        raise OSError("valid options are: 'all', 'ref', 'mscoco' and 'saiapr'")
