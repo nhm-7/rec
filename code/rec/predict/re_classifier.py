@@ -115,16 +115,6 @@ SPATIAL_KEYWORDS = [
 
 SPATIALS = SPATIAL_PREPOSITIONS + SPATIAL_KEYWORDS
 
-# # Mylonas et al. (2015) The Use of English Colour Terms in Big Data
-# # (...) 30 most frequent colour terms with the highest average rank across Twitter and Google Books.
-# COLORS = [
-#     'white', 'black', 'red', 'blue', 'brown', 'green', 'cream',
-#     'yellow', 'orange', 'gray', 'grey', 'pink', 'purple', 'lime', 'olive',
-#     'salmon', 'mustard', 'peach', 'coral', 'violet', 'plum', 'lavender',
-#     'lilac', 'aqua', 'indigo', 'maroon', 'teal', 'turquoise', 'burgundy',
-#     'aubergine', 'beige'
-# ]
-
 # 12 simple colors
 COLORS = [
     'red', 'orange', 'yellow', 'green', 'blue', 'violet', 'purple', 'pink',
