@@ -137,6 +137,11 @@ def get_args():
         help='dataloader num workers',
         type=int
     )
+    parser.add_argument(
+        '--get-sample',
+        help='if set, run test script in a small batch of data. used for testing purposes.',
+        action=argparse.BooleanOptionalAction
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
@@ -171,13 +176,14 @@ def run():
     num_conv = int(num_conv)
     segmentation_head = bool(float(mu) > 0.0)
     mask_pooling = bool(mask_pooling == '1')
+    get_sample = args.get_sample
 
     if torch.cuda.is_available() and args.gpus is not None:
         device = torch.device(f'cuda:{args.gpus}')
     else:
         device = torch.device('cpu')
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-            "mu", "mask_pooling"]:
+            "mu", "mask_pooling", "get_sample"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
 
@@ -201,6 +207,7 @@ def run():
             tokenizer=tokenizer,
             max_length=max_length,
             with_mask_bbox=False,
+            get_sample=get_sample
         ) for split in ds_splits
     }
 
