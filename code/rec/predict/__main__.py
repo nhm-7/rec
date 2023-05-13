@@ -8,6 +8,7 @@ import os
 import ast
 import torch
 import transformers
+import pandas as pd
 from torchvision.ops import box_iou
 
 from rec.utils import cprint, progressbar, get_tokenizer
@@ -29,62 +30,59 @@ def iou(preds, targets):
 
 
 @torch.no_grad()
+def process_batch(batch, model, device):
+    for k, v in batch.items():
+        if torch.is_tensor(v):
+            batch[k] = v.to(device)
+    batch['tok']['input_ids'] = batch['tok']['input_ids'].to(device)
+    batch['tok']['attention_mask'] = batch['tok']['attention_mask'].to(device)
+
+    preds, _ = model(batch)
+
+    # to original coordinates
+    preds = undo_box_transforms_batch(preds, batch['tr_param'])
+
+    # clamp to original image size
+    h0, w0 = batch['image_size'].unbind(1)
+    image_size = torch.stack([w0, h0, w0, h0], dim=1)
+    preds = torch.clamp(preds, torch.zeros_like(image_size), image_size-1)
+    return preds
+
+
+@torch.no_grad()
 def test(model, loader, rec, iou_threshold=0.5):
     device = next(model.parameters()).device
-
-    counts = {
-        'all_hits': 0, 'all_counts': 0,
-        'intrinsic_hits': 0, 'intrinsic_counts': 0,
-        'spatial_hits': 0, 'spatial_counts': 0,
-        'ordinal_hits': 0, 'ordinal_counts': 0,
-        'relational_hits': 0, 'relational_counts': 0,
+    results = {
+        "bbox_raw": [],
+        "bbox_pred": [],
+        "img_filename": [],
+        "expr": [],
+        "intrinsic": [],
+        "spatial": [],
+        "ordinal": [],
+        "relational": []
     }
-
     for batch in progressbar(loader, total=len(loader)):
-        for k, v in batch.items():
-            if torch.is_tensor(v):
-                batch[k] = v.to(device)
-        batch['tok']['input_ids'] = batch['tok']['input_ids'].to(device)
-        batch['tok']['attention_mask'] = batch['tok']['attention_mask'].to(device)
-
-        preds, _ = model(batch)
-
-        # to original coordinates
-        preds = undo_box_transforms_batch(preds, batch['tr_param'])
-
-        # clamp to original image size
-        h0, w0 = batch['image_size'].unbind(1)
-        image_size = torch.stack([w0, h0, w0, h0], dim=1)
-        preds = torch.clamp(preds, torch.zeros_like(image_size), image_size-1)
-
+        results["bbox_raw"].extend(batch["bbox_raw"])
+        results["img_filename"].extend(batch["img_filename"])
+        results["expr"].extend(batch["expr"])
+        preds = process_batch(batch, model, device)
+        results["bbox_pred"].extend(preds)
         iou_ = iou(preds, batch['bbox_raw'])
-
         hits = (iou_ > iou_threshold).float().detach().tolist()
-
-        counts['all_hits'] += int(sum(hits))
-        counts['all_counts'] += len(hits)
-
         spatial, ordinal, relational = zip(*[
             rec.classify(expr) for expr in batch['expr']
         ])
-
         intrinsic = [hits[i] for i in range(len(hits)) if (spatial[i] + ordinal[i] + relational[i]) == 0]
-        counts['intrinsic_hits'] += int(sum(intrinsic))
-        counts['intrinsic_counts'] += len(intrinsic)
-
         spatial = [hits[i] for i, cls in enumerate(spatial) if cls == 1]
-        counts['spatial_hits'] += int(sum(spatial))
-        counts['spatial_counts'] += len(spatial)
-
         ordinal = [hits[i] for i, cls in enumerate(ordinal) if cls == 1]
-        counts['ordinal_hits'] += int(sum(ordinal))
-        counts['ordinal_counts'] += len(ordinal)
-
         relational = [hits[i] for i, cls in enumerate(relational) if cls == 1]
-        counts['relational_hits'] += int(sum(relational))
-        counts['relational_counts'] += len(relational)
-
-    return counts
+        results["intrinsic"].extend(intrinsic)
+        results["spatial"].extend(spatial)
+        results["ordinal"].extend(ordinal)
+        results["relational"].extend(relational)
+    df_results = pd.DataFrame().from_dict(results)
+    return df_results
 
 
 def get_args():
@@ -142,6 +140,11 @@ def get_args():
         help='if set, run test script in a small batch of data. used for testing purposes.',
         action=argparse.BooleanOptionalAction
     )
+    parser.add_argument(
+        '--dump',
+        help='if set, save REC results and other predictions info into a pandas csv.',
+        action=argparse.BooleanOptionalAction
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
@@ -177,13 +180,14 @@ def run():
     segmentation_head = bool(float(mu) > 0.0)
     mask_pooling = bool(mask_pooling == '1')
     get_sample = args.get_sample
+    dump_results = args.dump
 
     if torch.cuda.is_available() and args.gpus is not None:
         device = torch.device(f'cuda:{args.gpus}')
     else:
         device = torch.device('cpu')
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-            "mu", "mask_pooling", "get_sample"]:
+            "mu", "mask_pooling", "get_sample", "dump_results"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
 
@@ -255,7 +259,7 @@ def run():
     for split in ds_splits:
         print(f'evaluating \'{split}\' split ...')
 
-        counts = test(model, loaders[split], rec)
+        df_results = test(model, loaders[split], rec)
 
         with open(args.checkpoint.replace('.ckpt', f'.{split}'), 'w') as fh:
             fh.write(
