@@ -63,11 +63,11 @@ def test(model, loader, rec, iou_threshold=0.5):
         "relational": []
     }
     for batch in progressbar(loader, total=len(loader)):
-        results["bbox_raw"].extend(batch["bbox_raw"])
+        results["bbox_raw"].extend(batch["bbox_raw"].numpy())
         results["img_filename"].extend(batch["img_filename"])
         results["expr"].extend(batch["expr"])
         preds = process_batch(batch, model, device)
-        results["bbox_pred"].extend(preds)
+        results["bbox_pred"].extend(preds.numpy())
         iou_ = iou(preds, batch['bbox_raw'])
         hits = (iou_ > iou_threshold).float().detach().tolist()
         results["hits"].extend(hits)
@@ -252,6 +252,6 @@ def run():
                 args.checkpoint.replace("best.ckpt", f"predictions_{split}.parquet"), index=False
             )
             df_counts.to_csv(
-                args.checkpoint.replace("best.ckpt", f"counts_{split}.csv", index=False)
+                args.checkpoint.replace("best.ckpt", f"counts_{split}.csv"), index=False
             )
         print(df_counts)
