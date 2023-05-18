@@ -11,8 +11,8 @@ import transformers
 import pandas as pd
 from torchvision.ops import box_iou
 
-from rec.utils import cprint, progressbar, get_tokenizer
 import rec.models as m
+from rec.utils import cprint, progressbar, get_tokenizer, get_rec_counts
 from rec.transforms import get_transform, undo_box_transforms_batch
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
 from rec.predict.re_classifier import REClassifier
@@ -57,7 +57,7 @@ def test(model, loader, rec, iou_threshold=0.5):
         "bbox_pred": [],
         "img_filename": [],
         "expr": [],
-        "intrinsic": [],
+        "hits": [],
         "spatial": [],
         "ordinal": [],
         "relational": []
@@ -70,18 +70,17 @@ def test(model, loader, rec, iou_threshold=0.5):
         results["bbox_pred"].extend(preds)
         iou_ = iou(preds, batch['bbox_raw'])
         hits = (iou_ > iou_threshold).float().detach().tolist()
+        results["hits"].extend(hits)
         spatial, ordinal, relational = zip(*[
             rec.classify(expr) for expr in batch['expr']
         ])
-        intrinsic = [hits[i] for i in range(len(hits)) if (spatial[i] + ordinal[i] + relational[i]) == 0]
-        spatial = [hits[i] for i, cls in enumerate(spatial) if cls == 1]
-        ordinal = [hits[i] for i, cls in enumerate(ordinal) if cls == 1]
-        relational = [hits[i] for i, cls in enumerate(relational) if cls == 1]
-        results["intrinsic"].extend(intrinsic)
         results["spatial"].extend(spatial)
         results["ordinal"].extend(ordinal)
         results["relational"].extend(relational)
     df_results = pd.DataFrame().from_dict(results)
+    df_results.loc[:, "intrinsic"] = (
+        df_results.loc[:, ["spatial", "ordinal", "relational"]].sum(axis=1) == 0
+    ).astype(int)
     return df_results
 
 
@@ -190,9 +189,7 @@ def run():
             "mu", "mask_pooling", "get_sample", "dump_results"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
-
     tokenizer = get_tokenizer()
-
     if dataset == 'refclef':
         ds_class, ds_splits = RefCLEF, ('val', 'test', )
     elif dataset == 'refcoco':
@@ -203,7 +200,6 @@ def run():
         ds_class, ds_splits = RefCOCOg, ('val', 'test', )
     else:
         raise RuntimeError('invalid dataset')
-
     datasets = {
         split: ds_class(
             split,
@@ -214,7 +210,6 @@ def run():
             get_sample=get_sample
         ) for split in ds_splits
     }
-
     loaders = {
         split: torch.utils.data.DataLoader(
             datasets[split],
@@ -226,7 +221,6 @@ def run():
             drop_last=False,
         ) for split in ds_splits
     }
-
     model = m.IntuitionKillingMachine(
         backbone=backbone,
         pretrained=True,
@@ -236,41 +230,28 @@ def run():
         segmentation_head=segmentation_head,
         mask_pooling=mask_pooling
     ).to(device)
-
     checkpoint = torch.load(
         args.checkpoint, map_location=lambda storage, loc: storage
     )
-
     # strip 'model.' from pl checkpoint
     state_dict = {
         k[len('model.'):]: v
         for k, v in checkpoint['state_dict'].items()
     }
-
     missing, _ = model.load_state_dict(state_dict, strict=False)
-
     # ensure the only missing keys are those of the segmentation head only
     assert [k for k in missing if 'segm' not in k] == []
-
     rec = REClassifier(backend='stanza', device=device)
-
     model.eval()
-
     for split in ds_splits:
         print(f'evaluating \'{split}\' split ...')
-
         df_results = test(model, loaders[split], rec)
-
-        with open(args.checkpoint.replace('.ckpt', f'.{split}'), 'w') as fh:
-            fh.write(
-                f'# {args.checkpoint}\n'
-                f'# epoch={checkpoint["epoch"]}, step={checkpoint["global_step"]}\n'
-                f'# input-size={input_size}, max-length={max_length}, iou-threshold={args.iou_threshold}\n'
-                f'{counts["all_hits"]} {counts["all_counts"]} {100*counts["all_hits"]/counts["all_counts"]:.2f} '
-                f'{counts["intrinsic_hits"]} {counts["intrinsic_counts"]} {100*counts["intrinsic_hits"]/counts["intrinsic_counts"]:.2f} '
-                f'{counts["spatial_hits"]} {counts["spatial_counts"]} {100*counts["spatial_hits"]/counts["spatial_counts"]:.2f} '
-                f'{counts["ordinal_hits"]} {counts["ordinal_counts"]} {100*counts["ordinal_hits"]/counts["ordinal_counts"]:.2f} '
-                f'{counts["relational_hits"]} {counts["relational_counts"]} {100*counts["relational_hits"]/counts["relational_counts"]:.2f}\n'
+        df_counts = get_rec_counts(df_results)
+        if dump_results:
+            df_results.to_parquet(
+                args.checkpoint.replace("best.ckpt", f"predictions_{split}.parquet"), index=False
             )
-
-    # cat LOGFILE | sed 's/\./,/g' | tail -1 | awk '{print $3" "$6" "$9" "$12" "$15}'
+            df_counts.to_csv(
+                args.checkpoint.replace("best.ckpt", f"counts_{split}.csv", index=False)
+            )
+        print(df_counts)
