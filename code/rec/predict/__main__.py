@@ -8,10 +8,11 @@ import os
 import ast
 import torch
 import transformers
+import pandas as pd
 from torchvision.ops import box_iou
 
-from rec.utils import cprint, progressbar, get_tokenizer
 import rec.models as m
+from rec.utils import cprint, progressbar, get_tokenizer, get_rec_counts
 from rec.transforms import get_transform, undo_box_transforms_batch
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
 from rec.predict.re_classifier import REClassifier
@@ -29,62 +30,58 @@ def iou(preds, targets):
 
 
 @torch.no_grad()
+def process_batch(batch, model, device):
+    for k, v in batch.items():
+        if torch.is_tensor(v):
+            batch[k] = v.to(device)
+    batch['tok']['input_ids'] = batch['tok']['input_ids'].to(device)
+    batch['tok']['attention_mask'] = batch['tok']['attention_mask'].to(device)
+
+    preds, _ = model(batch)
+
+    # to original coordinates
+    preds = undo_box_transforms_batch(preds, batch['tr_param'])
+
+    # clamp to original image size
+    h0, w0 = batch['image_size'].unbind(1)
+    image_size = torch.stack([w0, h0, w0, h0], dim=1)
+    preds = torch.clamp(preds, torch.zeros_like(image_size), image_size-1)
+    return preds
+
+
+@torch.no_grad()
 def test(model, loader, rec, iou_threshold=0.5):
     device = next(model.parameters()).device
-
-    counts = {
-        'all_hits': 0, 'all_counts': 0,
-        'intrinsic_hits': 0, 'intrinsic_counts': 0,
-        'spatial_hits': 0, 'spatial_counts': 0,
-        'ordinal_hits': 0, 'ordinal_counts': 0,
-        'relational_hits': 0, 'relational_counts': 0,
+    results = {
+        "bbox_raw": [],
+        "bbox_pred": [],
+        "img_filename": [],
+        "expr": [],
+        "hits": [],
+        "spatial": [],
+        "ordinal": [],
+        "relational": []
     }
-
     for batch in progressbar(loader, total=len(loader)):
-        for k, v in batch.items():
-            if torch.is_tensor(v):
-                batch[k] = v.to(device)
-        batch['tok']['input_ids'] = batch['tok']['input_ids'].to(device)
-        batch['tok']['attention_mask'] = batch['tok']['attention_mask'].to(device)
-
-        preds, _ = model(batch)
-
-        # to original coordinates
-        preds = undo_box_transforms_batch(preds, batch['tr_param'])
-
-        # clamp to original image size
-        h0, w0 = batch['image_size'].unbind(1)
-        image_size = torch.stack([w0, h0, w0, h0], dim=1)
-        preds = torch.clamp(preds, torch.zeros_like(image_size), image_size-1)
-
+        results["bbox_raw"].extend(batch["bbox_raw"].numpy())
+        results["img_filename"].extend(batch["img_filename"])
+        results["expr"].extend(batch["expr"])
+        preds = process_batch(batch, model, device)
+        results["bbox_pred"].extend(preds.numpy())
         iou_ = iou(preds, batch['bbox_raw'])
-
         hits = (iou_ > iou_threshold).float().detach().tolist()
-
-        counts['all_hits'] += int(sum(hits))
-        counts['all_counts'] += len(hits)
-
+        results["hits"].extend(hits)
         spatial, ordinal, relational = zip(*[
             rec.classify(expr) for expr in batch['expr']
         ])
-
-        intrinsic = [hits[i] for i in range(len(hits)) if (spatial[i] + ordinal[i] + relational[i]) == 0]
-        counts['intrinsic_hits'] += int(sum(intrinsic))
-        counts['intrinsic_counts'] += len(intrinsic)
-
-        spatial = [hits[i] for i, cls in enumerate(spatial) if cls == 1]
-        counts['spatial_hits'] += int(sum(spatial))
-        counts['spatial_counts'] += len(spatial)
-
-        ordinal = [hits[i] for i, cls in enumerate(ordinal) if cls == 1]
-        counts['ordinal_hits'] += int(sum(ordinal))
-        counts['ordinal_counts'] += len(ordinal)
-
-        relational = [hits[i] for i, cls in enumerate(relational) if cls == 1]
-        counts['relational_hits'] += int(sum(relational))
-        counts['relational_counts'] += len(relational)
-
-    return counts
+        results["spatial"].extend(spatial)
+        results["ordinal"].extend(ordinal)
+        results["relational"].extend(relational)
+    df_results = pd.DataFrame().from_dict(results)
+    df_results.loc[:, "intrinsic"] = (
+        df_results.loc[:, ["spatial", "ordinal", "relational"]].sum(axis=1) == 0
+    ).astype(int)
+    return df_results
 
 
 def get_args():
@@ -137,9 +134,43 @@ def get_args():
         help='dataloader num workers',
         type=int
     )
+    parser.add_argument(
+        '--get-sample',
+        help='if set, run test script in a small batch of data. used for testing purposes.',
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        '--dump',
+        help='if set, save REC results and other predictions info into a pandas csv.',
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        '--split',
+        help='if set, predict only on split folder. Possible values are: valid, test, all. Default: valid.',
+        type=str,
+        default='all'
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
+
+
+def get_split_ds_class(dataset, split_arg):
+    dataset_cls_splits = {
+        "refclef": (RefCLEF, ['test']),
+        "refcoco": (RefCOCO, ['testA', 'testB']),
+        "refcoco+": (RefCOCOp, ['testA', 'testB']),
+        "refcocog": (RefCOCOg, ['test'])
+    }
+    cls_split = dataset_cls_splits[dataset]
+    splits_d = {
+        "valid": ['val'],
+        "test": cls_split[1],
+        "all": ['val'] + cls_split[1]
+    }
+    ds_class = cls_split[0]
+    ds_splits = splits_d[split_arg]
+    return ds_class, ds_splits
 
 
 def run():
@@ -171,29 +202,20 @@ def run():
     num_conv = int(num_conv)
     segmentation_head = bool(float(mu) > 0.0)
     mask_pooling = bool(mask_pooling == '1')
+    get_sample = args.get_sample
+    dump_results = args.dump
+    split_arg = args.split
 
     if torch.cuda.is_available() and args.gpus is not None:
         device = torch.device(f'cuda:{args.gpus}')
     else:
         device = torch.device('cpu')
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-            "mu", "mask_pooling"]:
+            "mu", "mask_pooling", "get_sample", "dump_results"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
-
     tokenizer = get_tokenizer()
-
-    if dataset == 'refclef':
-        ds_class, ds_splits = RefCLEF, ('val', 'test', )
-    elif dataset == 'refcoco':
-        ds_class, ds_splits = RefCOCO, ('val', 'testA', 'testB', )
-    elif dataset == 'refcoco+':
-        ds_class, ds_splits = RefCOCOp, ('val', 'testA', 'testB', )
-    elif dataset == 'refcocog':
-        ds_class, ds_splits = RefCOCOg, ('val', 'test', )
-    else:
-        raise RuntimeError('invalid dataset')
-
+    ds_class, ds_splits = get_split_ds_class(dataset, split_arg)
     datasets = {
         split: ds_class(
             split,
@@ -201,9 +223,9 @@ def run():
             tokenizer=tokenizer,
             max_length=max_length,
             with_mask_bbox=False,
+            get_sample=get_sample
         ) for split in ds_splits
     }
-
     loaders = {
         split: torch.utils.data.DataLoader(
             datasets[split],
@@ -215,7 +237,6 @@ def run():
             drop_last=False,
         ) for split in ds_splits
     }
-
     model = m.IntuitionKillingMachine(
         backbone=backbone,
         pretrained=True,
@@ -225,41 +246,28 @@ def run():
         segmentation_head=segmentation_head,
         mask_pooling=mask_pooling
     ).to(device)
-
     checkpoint = torch.load(
         args.checkpoint, map_location=lambda storage, loc: storage
     )
-
     # strip 'model.' from pl checkpoint
     state_dict = {
         k[len('model.'):]: v
         for k, v in checkpoint['state_dict'].items()
     }
-
     missing, _ = model.load_state_dict(state_dict, strict=False)
-
     # ensure the only missing keys are those of the segmentation head only
     assert [k for k in missing if 'segm' not in k] == []
-
     rec = REClassifier(backend='stanza', device=device)
-
     model.eval()
-
     for split in ds_splits:
         print(f'evaluating \'{split}\' split ...')
-
-        counts = test(model, loaders[split], rec)
-
-        with open(args.checkpoint.replace('.ckpt', f'.{split}'), 'w') as fh:
-            fh.write(
-                f'# {args.checkpoint}\n'
-                f'# epoch={checkpoint["epoch"]}, step={checkpoint["global_step"]}\n'
-                f'# input-size={input_size}, max-length={max_length}, iou-threshold={args.iou_threshold}\n'
-                f'{counts["all_hits"]} {counts["all_counts"]} {100*counts["all_hits"]/counts["all_counts"]:.2f} '
-                f'{counts["intrinsic_hits"]} {counts["intrinsic_counts"]} {100*counts["intrinsic_hits"]/counts["intrinsic_counts"]:.2f} '
-                f'{counts["spatial_hits"]} {counts["spatial_counts"]} {100*counts["spatial_hits"]/counts["spatial_counts"]:.2f} '
-                f'{counts["ordinal_hits"]} {counts["ordinal_counts"]} {100*counts["ordinal_hits"]/counts["ordinal_counts"]:.2f} '
-                f'{counts["relational_hits"]} {counts["relational_counts"]} {100*counts["relational_hits"]/counts["relational_counts"]:.2f}\n'
+        df_results = test(model, loaders[split], rec)
+        df_counts = get_rec_counts(df_results)
+        if dump_results:
+            df_results.to_parquet(
+                args.checkpoint.replace("best.ckpt", f"predictions_{split}.parquet"), index=False
             )
-
-    # cat LOGFILE | sed 's/\./,/g' | tail -1 | awk '{print $3" "$6" "$9" "$12" "$15}'
+            df_counts.to_csv(
+                args.checkpoint.replace("best.ckpt", f"counts_{split}.csv"), index=False
+            )
+        print(df_counts)

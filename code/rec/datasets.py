@@ -41,8 +41,10 @@ def collate_fn(batch):
         mask_bbox = torch.stack([s['mask_bbox'] for s in batch], dim=0)
 
     tr_param = [s['tr_param'] for s in batch]
+    img_filenames = [s['img_filename'] for s in batch]
 
     return {
+        'img_filename': img_filenames,
         'image': image,
         'image_size': image_size,
         'bbox': bbox,
@@ -99,8 +101,8 @@ class RECDataset(torch.utils.data.Dataset):
 
         # image size as read from disk (PIL)
         W0, H0 = img.size
-
         sample = {
+            'img_filename': file_name,
             'image': img,
             'image_size': (H0, W0),  # image original size
             'bbox': bbox.clone(),  # box transformations are inplace ops

@@ -4,6 +4,7 @@ import gzip
 import json
 import time
 import numpy as np
+import pandas as pd
 import transformers
 
 from tqdm import tqdm
@@ -171,3 +172,17 @@ def xywh2xyxy(boxes, inplace=False, as_int=False):
     boxes[:, 2] = boxes[:, 0] + boxes[:, 2] - int(as_int)
     boxes[:, 3] = boxes[:, 1] + boxes[:, 3] - int(as_int)
     return boxes
+
+
+def get_rec_counts(df_results):
+    counts = {
+        "hits": [],
+        "counts": [],
+        "rec_cls": []
+    }
+    for rec_cls in ["spatial", "ordinal", "relational", "intrinsic"]:
+        counts["rec_cls"].append(rec_cls)
+        mask_rec_cls = (df_results[rec_cls] == 1)
+        counts["hits"].append(df_results.loc[mask_rec_cls, "hits"].sum())
+        counts["counts"].append(df_results.loc[mask_rec_cls, "hits"].shape[0])
+    return pd.DataFrame().from_dict(counts)
