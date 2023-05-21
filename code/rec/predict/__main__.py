@@ -148,7 +148,7 @@ def get_args():
         '--split',
         help='if set, predict only on split folder. Possible values are: valid, test, all. Default: valid.',
         type=str,
-        default='all'
+        default='valid'
     )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
