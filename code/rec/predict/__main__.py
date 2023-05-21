@@ -144,9 +144,33 @@ def get_args():
         help='if set, save REC results and other predictions info into a pandas csv.',
         action=argparse.BooleanOptionalAction
     )
+    parser.add_argument(
+        '--split',
+        help='if set, predict only on split folder. Possible values are: valid, test, all. Default: valid.',
+        type=str,
+        default='all'
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
+
+
+def get_split_ds_class(dataset, split_arg):
+    dataset_cls_splits = {
+        "refclef": (RefCLEF, ['test']),
+        "refcoco": (RefCOCO, ['testA', 'testB']),
+        "refcoco+": (RefCOCOp, ['testA', 'testB']),
+        "refcocog": (RefCOCOg, ['test'])
+    }
+    cls_split = dataset_cls_splits[dataset]
+    splits_d = {
+        "valid": ['val'],
+        "test": cls_split[1],
+        "all": ['val'] + cls_split[1]
+    }
+    ds_class = cls_split[0]
+    ds_splits = splits_d[split_arg]
+    return ds_class, ds_splits
 
 
 def run():
@@ -180,6 +204,7 @@ def run():
     mask_pooling = bool(mask_pooling == '1')
     get_sample = args.get_sample
     dump_results = args.dump
+    split_arg = args.split
 
     if torch.cuda.is_available() and args.gpus is not None:
         device = torch.device(f'cuda:{args.gpus}')
@@ -190,16 +215,7 @@ def run():
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
     tokenizer = get_tokenizer()
-    if dataset == 'refclef':
-        ds_class, ds_splits = RefCLEF, ('val', 'test', )
-    elif dataset == 'refcoco':
-        ds_class, ds_splits = RefCOCO, ('val', 'testA', 'testB', )
-    elif dataset == 'refcoco+':
-        ds_class, ds_splits = RefCOCOp, ('val', 'testA', 'testB', )
-    elif dataset == 'refcocog':
-        ds_class, ds_splits = RefCOCOg, ('val', 'test', )
-    else:
-        raise RuntimeError('invalid dataset')
+    ds_class, ds_splits = get_split_ds_class(dataset, split_arg)
     datasets = {
         split: ds_class(
             split,
