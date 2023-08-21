@@ -14,6 +14,12 @@ from yaer.base import experiment
         "num_layers": 6,
         "num_conv": 6,
         "use_visual_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
     },
     "data_args": {
         "dataset": "refclef",
@@ -119,6 +125,12 @@ def exp_002():
         "num_layers": 6,
         "num_conv": 0,
         "use_visual_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
     },
     "data_args": {
         "dataset": "refclef",
@@ -177,6 +189,12 @@ def exp_003():
         "num_layers": 6,
         "num_conv": 0,
         "use_visual_embeddings": False,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
     },
     "data_args": {
         "dataset": "refclef",
@@ -232,6 +250,12 @@ def exp_004():
         "num_conv": 0,
         "use_visual_embeddings": False,
         "use_visual_pos_embeddings": False,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
     },
     "data_args": {
         "dataset": "refclef",

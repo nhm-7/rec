@@ -133,3 +133,12 @@ class Box8PositionEmbedding2D(nn.Module):
             pos = self.proj(pos)
         return pos
 
+
+__EMBEDDINGS_FACTORY = {
+    "learned_pos_emb_2d": LearnedPositionEmbedding2D,
+    "pos_emb_2d": PositionEmbedding2D,
+}
+
+
+def get_embedding_instance(name, args):
+    return __EMBEDDINGS_FACTORY[name](**args)

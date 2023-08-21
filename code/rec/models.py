@@ -14,7 +14,7 @@ from torchvision.ops import box_convert, box_iou
 from torchvision.utils import draw_bounding_boxes, make_grid
 
 from rec.utils import conv3x3, weight_init
-from rec.embeddings import LearnedPositionEmbedding1D, LearnedPositionEmbedding2D
+from rec.embeddings import LearnedPositionEmbedding1D, get_embedding_instance
 from rec.losses import GIoULoss, FocalLoss
 from rec.transforms import undo_box_transforms_batch, denormalize
 from rec.transformers_pos import (
@@ -30,7 +30,7 @@ class IntuitionKillingMachine(nn.Module):
                  backbone='resnet50', pretrained=True, embedding_size=256,
                  num_heads=8, num_layers=6, num_conv=4, dropout_p=0.1,
                  segmentation_head=True, mask_pooling=True, use_visual_embeddings=True,
-                 use_visual_pos_embeddings=True):
+                 use_visual_pos_embeddings=True, vis_pos_emb=None):
         super().__init__()
 
         if backbone.endswith('+tr'):
@@ -60,9 +60,11 @@ class IntuitionKillingMachine(nn.Module):
             self.vis_enc.backbone.conv1.requires_grad = False
             self.vis_enc.backbone.conv1.eval()
 
-        self.vis_pos_emb = LearnedPositionEmbedding2D(
-            embedding_dim=embedding_size
-        )
+        if vis_pos_emb:
+            self.vis_pos_emb = vis_pos_emb
+        else:
+            self.vis_pos_emb = get_embedding_instance(name="learned_pos_emb_2d",
+                                                      args={"embedding_dim": embedding_size})
 
         self.lan_enc = LanguageEncoder(
             out_features=embedding_size,
@@ -418,6 +420,10 @@ class LitModel(pl.LightningModule):
 def lit_model_factory(
     trainer_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
     ) -> LitModel:
+    vis_pos_emb = get_embedding_instance(
+        model_args["visual_pos_emb"]["name"],
+        model_args["visual_pos_emb"]["args"]
+    )
     model = IntuitionKillingMachine(
         backbone=model_args["backbone"],
         pretrained=True,
@@ -428,7 +434,8 @@ def lit_model_factory(
         segmentation_head=bool(loss_args["mu"] > 0.0),
         mask_pooling=model_args["mask_pooling"],
         use_visual_embeddings=model_args["use_visual_embeddings"],
-        use_visual_pos_embeddings=model_args["use_visual_pos_embeddings"]
+        use_visual_pos_embeddings=model_args["use_visual_pos_embeddings"],
+        vis_pos_emb=vis_pos_emb
     )
     # model
     lit_model = LitModel(
