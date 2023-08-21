@@ -300,5 +300,5 @@ def exp_004():
     }
 })
 def exp_005():
-    """Define an exp that is the same as exp_004, but shuting down the visual positional embeddings."""
+    """Define an exp that is the same as exp_004, but also shuting down the visual positional embeddings."""
     run_experiment(model_factory=lit_model_factory)
