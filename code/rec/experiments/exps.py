@@ -230,7 +230,8 @@ def exp_004():
         "num_heads": 8,
         "num_layers": 6,
         "num_conv": 0,
-        "use_visual_embeddings": True,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": False,
     },
     "data_args": {
         "dataset": "refclef",
@@ -247,7 +248,7 @@ def exp_004():
         "weight_decay": 0.0,
         "batch_size": 12,
         "grad_steps": 4,
-        "max_epochs": 120,
+        "max_epochs": 90,
         "scheduler": lambda max_epochs: {
             'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
             'gamma': 0.1
@@ -255,7 +256,7 @@ def exp_004():
     },
     "runtime_args": {
         "gpus": "0,1,2",
-        "num_workers": 15,
+        "num_workers": 20,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",
@@ -272,10 +273,5 @@ def exp_004():
     }
 })
 def exp_005():
-    """Define an exp that is the same as the paper (referit->baseline).
-
-    Is the 20211220_201458 prefix folder name from paper's google drive versioned models.
-    The idea for this experiment is to compare its results with the reported ones in the paper.
-    We use more epochs (+30) in this experiment. That's the difference with exp_003.
-    """
+    """Define an exp that is the same as exp_004, but shuting down the visual positional embeddings."""
     run_experiment(model_factory=lit_model_factory)

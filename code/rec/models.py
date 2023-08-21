@@ -29,7 +29,8 @@ class IntuitionKillingMachine(nn.Module):
     def __init__(self,
                  backbone='resnet50', pretrained=True, embedding_size=256,
                  num_heads=8, num_layers=6, num_conv=4, dropout_p=0.1,
-                 segmentation_head=True, mask_pooling=True, use_visual_embeddings=True):
+                 segmentation_head=True, mask_pooling=True, use_visual_embeddings=True,
+                 use_visual_pos_embeddings=True):
         super().__init__()
 
         if backbone.endswith('+tr'):
@@ -122,6 +123,7 @@ class IntuitionKillingMachine(nn.Module):
 
         self.embedding_size = embedding_size
         self.use_visual_embeddings = use_visual_embeddings
+        self.use_visual_pos_embeddings = use_visual_pos_embeddings
 
     def slow_param_ids(self, slow_visual_backbone=True, slow_language_backbone=True):
         ids = []
@@ -168,6 +170,7 @@ class IntuitionKillingMachine(nn.Module):
         x = x * self.use_visual_embeddings
         x_mask = self.flatten(x_mask).squeeze(-1)  # NxR
         x_pos = self.flatten(x_pos)   # NxRxD
+        x_pos = x_pos * self.use_visual_pos_embeddings
 
         # ---
         # LANGUAGE EMBEDDINGS
