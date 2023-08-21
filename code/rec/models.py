@@ -427,7 +427,8 @@ def lit_model_factory(
         dropout_p=model_args["dropout_p"],
         segmentation_head=bool(loss_args["mu"] > 0.0),
         mask_pooling=model_args["mask_pooling"],
-        use_visual_embeddings=model_args["use_visual_embeddings"]
+        use_visual_embeddings=model_args["use_visual_embeddings"],
+        use_visual_pos_embeddings=model_args["use_visual_pos_embeddings"]
     )
     # model
     lit_model = LitModel(
