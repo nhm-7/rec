@@ -14,6 +14,7 @@ from yaer.base import experiment
         "num_layers": 6,
         "num_conv": 6,
         "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
         "visual_pos_emb": {
             "name": "learned_pos_emb_2d",
             "args": {
@@ -112,7 +113,7 @@ def exp_001():
     }
 })
 def exp_002():
-    """Exp 002 with scheduler parameter defined."""
+    """Exp 002 with scheduler parameter defined. Useless experiment."""
     run_experiment(model_factory=lit_model_factory)
 
 
@@ -125,6 +126,7 @@ def exp_002():
         "num_layers": 6,
         "num_conv": 0,
         "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
         "visual_pos_emb": {
             "name": "learned_pos_emb_2d",
             "args": {
@@ -189,6 +191,7 @@ def exp_003():
         "num_layers": 6,
         "num_conv": 0,
         "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
         "visual_pos_emb": {
             "name": "learned_pos_emb_2d",
             "args": {
