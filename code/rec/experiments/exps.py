@@ -424,3 +424,125 @@ def exp_006():
 def exp_007():
     """Same as exp_004 but using another vis pos embedding."""
     run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 3407,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": False,
+        "pdata": 1.0,
+        "output_dir": "exp_008",
+        "get_sample": False
+    }
+})
+def exp_008():
+    """Exp003 but changing only the visual_pos_emb to relativeposemb2d."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1,2",
+        "num_workers": 20,
+        "seed": 3407,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_009",
+        "get_sample": False
+    }
+})
+def exp_009():
+    """Exp004 but changing only the visual_pos_emb to relativeposemb2d."""
+    run_experiment(model_factory=lit_model_factory)
