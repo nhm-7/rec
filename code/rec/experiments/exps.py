@@ -282,7 +282,7 @@ def exp_004():
         }
     },
     "runtime_args": {
-        "gpus": "0,1,2",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
@@ -343,7 +343,7 @@ def exp_005():
         }
     },
     "runtime_args": {
-        "gpus": "0,1",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
@@ -404,7 +404,7 @@ def exp_006():
         }
     },
     "runtime_args": {
-        "gpus": "0,1,2",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
@@ -465,7 +465,7 @@ def exp_007():
         }
     },
     "runtime_args": {
-        "gpus": "0,1",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
@@ -526,7 +526,7 @@ def exp_008():
         }
     },
     "runtime_args": {
-        "gpus": "0,1,2",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
