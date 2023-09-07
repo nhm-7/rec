@@ -221,7 +221,7 @@ def exp_003():
         }
     },
     "runtime_args": {
-        "gpus": "0,1,2",
+        "gpus": "0,1,2,3",
         "num_workers": 20,
         "seed": 3407,
         "suffix": None,
