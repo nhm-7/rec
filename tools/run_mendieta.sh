@@ -22,6 +22,8 @@ echo ""
 source ${HOME}/.bashrc
 conda activate rec-env
 
+export TRANSFORMERS_OFFLINE=1
+
 cd ${HOME}/rec/code/rec/
 
 srun yaer run -e exp_001
