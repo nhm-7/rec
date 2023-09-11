@@ -49,7 +49,7 @@ from yaer.base import experiment
         "debug": False,
         "early_stopping": False,
         "amp": False,
-        "force_ddp": False,
+        "force_ddp": True,
         "profile": False,
         "checkpoint": None,
         "save_last": False,
@@ -221,8 +221,8 @@ def exp_003():
         }
     },
     "runtime_args": {
-        "gpus": "0,1,2,3",
-        "num_workers": 20,
+        "gpus": -1,
+        "num_workers": 8,
         "seed": 3407,
         "suffix": None,
         "cache": "./cache",

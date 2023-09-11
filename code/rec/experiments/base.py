@@ -9,6 +9,7 @@ import logging
 import pytorch_lightning as pl
 from typing import Dict, Any
 from yaer.base import experiment_component
+from pytorch_lightning.strategies import DDPShardedStrategy, DDPStrategy
 
 from rec.utils import get_tokenizer
 from rec.settings import MODELS_OUTPUT
@@ -125,6 +126,7 @@ def run_experiment(
     model_factory: Any, trainer_args: Dict = None, runtime_args: Dict = None,
     data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
     ) -> None:
+    logg.info(f"CUDA available devices:{torch.cuda.device_count()}")
     pl.seed_everything(runtime_args["seed"])
     torch.cuda.empty_cache()
     transformers.logging.set_verbosity_error()
@@ -154,17 +156,20 @@ def run_experiment(
         )
 
     gpus, strategy = None, None
-    if runtime_args["gpus"] is not None:
-        gpus = [int(i) for i in runtime_args["gpus"].split(',')]
+    if runtime_args["gpus"] is not None and torch.cuda.device_count() > 0:
+        if runtime_args["gpus"] == -1:
+            gpus = list(range(torch.cuda.device_count()))
+        else:
+            gpus = [int(i) for i in runtime_args["gpus"].split(',')]
 
         if not runtime_args["force_ddp"] and len(gpus) > 1:
             try:
                 import fairscale
             except ModuleNotFoundError:
                 raise ModuleNotFoundError('you need fairscale to train with multiple GPUs')
-            strategy = pl.plugins.DDPShardedPlugin()
+            strategy = DDPShardedStrategy()
         else:
-            strategy = pl.plugins.DDPPlugin(find_unused_parameters=True)
+            strategy = DDPStrategy()
 
     trainer = pl.Trainer(
         profiler=profiler,
