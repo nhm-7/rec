@@ -127,6 +127,10 @@ def run_experiment(
     data_args: Dict = None, loss_args: Dict = None, model_args: Dict = None
     ) -> None:
     logg.info(f"CUDA available devices:{torch.cuda.device_count()}")
+    if runtime_args["force_gpu"]:
+        logg.info("Waiting for an available GPU...")
+        while torch.cuda.device_count() == 0: pass
+    logg.info(f"CUDA available devices:{torch.cuda.device_count()}")
     pl.seed_everything(runtime_args["seed"])
     torch.cuda.empty_cache()
     transformers.logging.set_verbosity_error()

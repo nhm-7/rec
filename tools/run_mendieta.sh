@@ -3,11 +3,11 @@
 #SBATCH --output=slurm-%x.%j.out # %j job id, ½x job name
 #SBATCH --error=slurm-%x.%j.err
 #SBATCH --partition=multi
-#SBATCH --nodes=2                # node count
-#SBATCH --gres=gpu:4
-#SBATCH --cpus-per-task=8       # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --nodes=1                # node count
+#SBATCH --gres=gpu:2
+#SBATCH --cpus-per-task=10       # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --time=0-00:30           # total run time limit (<days>-<hours>:<minutes>)
-#. /etc/profile
+. /etc/profile
 module purge
 ulimit -c unlimited  # core dump
 ulimit -s unlimited  # stack
