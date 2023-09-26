@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=mannProcessHor # short name for your job
+#SBATCH --job-name=exp_005 # short name for your job
 #SBATCH --output=slurm-%x.%j.out # %j job id, ½x job name
 #SBATCH --error=slurm-%x.%j.err
 #SBATCH --partition=multi
 #SBATCH --nodes=1                # node count
 #SBATCH --gres=gpu:2
-#SBATCH --cpus-per-task=10       # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --time=0-00:30           # total run time limit (<days>-<hours>:<minutes>)
-. /etc/profile
+#SBATCH --cpus-per-task=20       # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --time=1-24:00           # total run time limit (<days>-<hours>:<minutes>)
+#. /etc/profile
 module purge
 ulimit -c unlimited  # core dump
 ulimit -s unlimited  # stack
@@ -29,4 +29,4 @@ export NCCL_DEBUG=INFO
 
 cd ${HOME}/rec/code/rec/
 
-yaer run -e exp_004
+srun yaer run -e exp_005
