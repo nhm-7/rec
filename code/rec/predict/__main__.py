@@ -128,7 +128,7 @@ def get_args():
     parser.add_argument(
         '--gpus',
         help='GPU id',
-        type=int
+        type=str
     )
     parser.add_argument(
         '--num-workers',
