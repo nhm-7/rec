@@ -35,4 +35,4 @@ export NCCL_SOCKET_IFNAME=lo
 
 cd ${HOME}/rec/code/rec/
 
-srun predict ~/nhormann/rec/models/exp_004/best.ckpt --params ~/nhormann/rec/models/exp_004/params.log --gpus "0,1"
+srun predict ~/rec/models/exp_004/best.ckpt --params ~/rec/models/exp_004/params.log --gpus "0,1"
