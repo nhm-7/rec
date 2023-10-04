@@ -192,6 +192,7 @@ def run():
             backbone, num_heads, num_layers = params['backbone'], params['num_heads'], params['num_layers']
             num_conv, mu, mask_pooling = params['num_conv'], params['mu'], params['mask_pooling']
             visual_pos_emb_args = params["visual_pos_emb"]
+            batch_size = params["batch_size"]
     else:
         # parse model arguments from checkpoint path
         exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
@@ -204,6 +205,7 @@ def run():
     num_layers = int(num_layers)
     num_heads = int(num_heads)
     num_conv = int(num_conv)
+    batch_size = int(batch_size)
     segmentation_head = bool(float(mu) > 0.0)
     mask_pooling = bool(mask_pooling == '1')
     get_sample = args.get_sample
@@ -233,7 +235,7 @@ def run():
     loaders = {
         split: torch.utils.data.DataLoader(
             datasets[split],
-            batch_size=args.batch_size,
+            batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             pin_memory=False,  # torch.cuda.is_available(),
