@@ -169,7 +169,7 @@ def run_experiment(
                 raise ModuleNotFoundError('you need fairscale to train with multiple GPUs')
             strategy = DDPShardedStrategy()
         else:
-            strategy = DDPStrategy()
+            strategy = DDPStrategy(find_unused_parameters=True)
 
     trainer = pl.Trainer(
         profiler=profiler,
