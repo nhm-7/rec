@@ -1095,3 +1095,247 @@ def exp_017():
 def exp_018():
     """Define an exp that is the same as exp_003 but changing the dataset to refcocog."""
     run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 42,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_019",
+        "get_sample": False
+    }
+})
+def exp_019():
+    """Exp008 but changing only the seed to 42."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 77,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_020",
+        "get_sample": False
+    }
+})
+def exp_020():
+    """Exp008 but changing only the seed to 77."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 240,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_021",
+        "get_sample": False
+    }
+})
+def exp_021():
+    """Exp008 but changing only the seed to 240."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": True,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "rel_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 187,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_022",
+        "get_sample": False
+    }
+})
+def exp_022():
+    """Exp008 but changing only the seed to 187."""
+    run_experiment(model_factory=lit_model_factory)
