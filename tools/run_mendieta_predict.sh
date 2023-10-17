@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=pred_008 # short name for your job
+#SBATCH --job-name=pred_027 # short name for your job
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=nicolas.hormann@mi.unc.edu.ar
 #SBATCH --output=slurm-%x.%j.out # %j job id, ½x job name
@@ -9,7 +9,7 @@
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=10       # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --time=0-18:00           # total run time limit (<days>-<hours>:<minutes>)
+#SBATCH --time=0-03:00           # total run time limit (<days>-<hours>:<minutes>)
 
 . /etc/profile
 module purge
@@ -35,4 +35,4 @@ export NCCL_SOCKET_IFNAME=lo
 
 cd ${HOME}/rec/code/rec/
 
-srun predict ~/rec/models/exp_008/best.ckpt --params ~/rec/models/exp_008/params.log --gpus "0" --split "all" --dump
+srun predict ~/rec/models/exp_027/best.ckpt --params ~/rec/models/exp_027/params.log --gpus "0" --split "all" --dump

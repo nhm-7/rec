@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=exp_009 # short name for your job
+#SBATCH --job-name=exp_027 # short name for your job
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=nicolas.hormann@mi.unc.edu.ar
 #SBATCH --output=slurm-%x.%j.out # %j job id, ½x job name
@@ -9,7 +9,7 @@
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --gres=gpu:2
 #SBATCH --cpus-per-task=20       # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --time=1-10:00           # total run time limit (<days>-<hours>:<minutes>)
+#SBATCH --time=1-15:00           # total run time limit (<days>-<hours>:<minutes>)
 
 . /etc/profile
 module purge
@@ -35,4 +35,4 @@ export NCCL_SOCKET_IFNAME=lo
 
 cd ${HOME}/rec/code/rec/
 
-srun yaer run -e exp_009
+srun yaer run -e exp_027
