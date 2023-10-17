@@ -12,6 +12,7 @@ import pandas as pd
 from torchvision.ops import box_iou
 
 import rec.models as m
+from rec.embeddings import get_embedding_instance
 from rec.utils import cprint, progressbar, get_tokenizer, get_rec_counts
 from rec.transforms import get_transform, undo_box_transforms_batch
 from rec.datasets import collate_fn, RefCLEF, RefCOCO, RefCOCOp, RefCOCOg
@@ -67,7 +68,8 @@ def test(model, loader, rec, iou_threshold=0.5):
         results["img_filename"].extend(batch["img_filename"])
         results["expr"].extend(batch["expr"])
         preds = process_batch(batch, model, device)
-        results["bbox_pred"].extend(preds.numpy())
+        preds_cpu = preds.cpu()
+        results["bbox_pred"].extend(preds_cpu.numpy())
         iou_ = iou(preds, batch['bbox_raw'])
         hits = (iou_ > iou_threshold).float().detach().tolist()
         results["hits"].extend(hits)
@@ -127,7 +129,7 @@ def get_args():
     parser.add_argument(
         '--gpus',
         help='GPU id',
-        type=int
+        type=str
     )
     parser.add_argument(
         '--num-workers',
@@ -189,10 +191,13 @@ def run():
             dataset, max_length, input_size = params['dataset'], params['max_length'], params['input_size']
             backbone, num_heads, num_layers = params['backbone'], params['num_heads'], params['num_layers']
             num_conv, mu, mask_pooling = params['num_conv'], params['mu'], params['mask_pooling']
+            visual_pos_emb_args = params["visual_pos_emb"]
+            batch_size = params["batch_size"]
     else:
         # parse model arguments from checkpoint path
         exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
         _, _, dataset, max_length, input_size, backbone, num_heads, num_layers, num_conv, beta, gamma, mu, mask_pooling = exp_dirname.split('_')[:13]
+        visual_pos_emb_args = None
         # the order of the remaining's filename are: (learning_rate, weight_decay, batch_size, grad_steps,
         # max_epochs, scheduler, early_stopping, amp, debug)
     max_length = int(max_length) if args.max_length is None else args.max_length
@@ -200,6 +205,7 @@ def run():
     num_layers = int(num_layers)
     num_heads = int(num_heads)
     num_conv = int(num_conv)
+    batch_size = int(batch_size)
     segmentation_head = bool(float(mu) > 0.0)
     mask_pooling = bool(mask_pooling == '1')
     get_sample = args.get_sample
@@ -211,7 +217,7 @@ def run():
     else:
         device = torch.device('cpu')
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-            "mu", "mask_pooling", "get_sample", "dump_results"]:
+            "mu", "mask_pooling", "get_sample", "dump_results", "visual_pos_emb_args"]:
         print(f"Parameter: {ag}, value {vars()[ag]}")
     # ------------------------------------------------------------------------
     tokenizer = get_tokenizer()
@@ -229,7 +235,7 @@ def run():
     loaders = {
         split: torch.utils.data.DataLoader(
             datasets[split],
-            batch_size=args.batch_size,
+            batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             pin_memory=False,  # torch.cuda.is_available(),
@@ -237,6 +243,9 @@ def run():
             drop_last=False,
         ) for split in ds_splits
     }
+    vis_pos_emb = None
+    if visual_pos_emb_args:
+        vis_pos_emb = get_embedding_instance(visual_pos_emb_args["name"], visual_pos_emb_args["args"])
     model = m.IntuitionKillingMachine(
         backbone=backbone,
         pretrained=True,
@@ -244,7 +253,8 @@ def run():
         num_layers=num_layers,
         num_conv=num_conv,
         segmentation_head=segmentation_head,
-        mask_pooling=mask_pooling
+        mask_pooling=mask_pooling,
+        vis_pos_emb=vis_pos_emb
     ).to(device)
     checkpoint = torch.load(
         args.checkpoint, map_location=lambda storage, loc: storage

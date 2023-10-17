@@ -6,6 +6,7 @@ import pathlib
 import os
 
 from zipfile import ZipFile
+from tqdm import tqdm
 
 
 EXT = '.zip'
@@ -51,9 +52,11 @@ def _download(file_url: str, filename: str) -> None:
     """
     r = requests.get(file_url, stream = True)
     with open(filename, "wb") as my_file:
+        pbar = tqdm(unit="B", total=int(r.headers['Content-Length']))
         for chunk in r.iter_content(chunk_size=1024):
             # writing one chunk at a time to my_file
             if chunk:
+                pbar.update(len(chunk))
                 my_file.write(chunk)
 
 
