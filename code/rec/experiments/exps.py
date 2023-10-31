@@ -1951,3 +1951,247 @@ def exp_031():
 def exp_032():
     """Exp022 but changing only the batch size to 8."""
     run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 938,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_033",
+        "get_sample": False
+    }
+})
+def exp_033():
+    """Exp004 with a different seed."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 258,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_034",
+        "get_sample": False
+    }
+})
+def exp_034():
+    """Exp004 with a different seed."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 119,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_035",
+        "get_sample": False
+    }
+})
+def exp_035():
+    """Exp004 with a different seed."""
+    run_experiment(model_factory=lit_model_factory)
+
+
+@experiment({
+    "model_args": {
+        "backbone": "resnet50",
+        "mask_pooling": False,
+        "dropout_p": 0.1,
+        "num_heads": 8,
+        "num_layers": 6,
+        "num_conv": 0,
+        "use_visual_embeddings": False,
+        "use_visual_pos_embeddings": True,
+        "visual_pos_emb": {
+            "name": "learned_pos_emb_2d",
+            "args": {
+                "embedding_dim": 256,
+            },
+        },
+    },
+    "data_args": {
+        "dataset": "refclef",
+        "max_length": 32,
+        "input_size": 512,
+    },
+    "loss_args": {
+        "beta": 0.1,
+        "gamma": 0.1,
+        "mu": 0.0,
+    },
+    "trainer_args": {
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0,
+        "batch_size": 12,
+        "grad_steps": 4,
+        "max_epochs": 90,
+        "scheduler": lambda max_epochs: {
+            'milestones': [int(p * max_epochs) for p in (0.6, 0.9)],
+            'gamma': 0.1
+        }
+    },
+    "runtime_args": {
+        "gpus": "0,1",
+        "num_workers": 20,
+        "seed": 291,
+        "suffix": None,
+        "cache": "./cache",
+        "debug": False,
+        "early_stopping": False,
+        "amp": False,
+        "force_ddp": False,
+        "profile": False,
+        "checkpoint": True,
+        "save_last": True,
+        "pdata": 1.0,
+        "output_dir": "exp_036",
+        "get_sample": False
+    }
+})
+def exp_036():
+    """Exp004 with a different seed."""
+    run_experiment(model_factory=lit_model_factory)
