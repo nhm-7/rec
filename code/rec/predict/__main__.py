@@ -152,6 +152,18 @@ def get_args():
         type=str,
         default='valid'
     )
+    parser.add_argument(
+        '--use-visual-emb',
+        help='if set, predict using or not the visual embeddings. Possible values are: training, yes, no. Default: training',
+        type=str,
+        default='training'
+    )
+    parser.add_argument(
+        '--use-visual-pos-emb',
+        help='if set, predict using or not the visual position embeddings. Possible values are: training, yes, no. Default: training',
+        type=str,
+        default='training'
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
@@ -193,6 +205,22 @@ def run():
             num_conv, mu, mask_pooling = params['num_conv'], params['mu'], params['mask_pooling']
             visual_pos_emb_args = params["visual_pos_emb"]
             batch_size = params["batch_size"]
+            if args.use_visual_emb == "yes":
+                use_visual_embeddings = True
+            elif args.use_visual_emb == "no":
+                use_visual_embeddings = False
+            elif args.use_visual_emb == "training":
+                use_visual_embeddings = params["use_visual_embeddings"]
+            else:
+                raise NotImplementedError
+            if args.use_visual_pos_emb == "yes":
+                use_visual_pos_embeddings = True
+            elif args.use_visual_pos_emb == "no":
+                use_visual_pos_embeddings = False
+            elif args.use_visual_pos_emb == "training":
+                use_visual_pos_embeddings = params["use_visual_pos_embeddings"]
+            else:
+                raise NotImplementedError
     else:
         # parse model arguments from checkpoint path
         exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
@@ -254,7 +282,9 @@ def run():
         num_conv=num_conv,
         segmentation_head=segmentation_head,
         mask_pooling=mask_pooling,
-        vis_pos_emb=vis_pos_emb
+        vis_pos_emb=vis_pos_emb,
+        use_visual_embeddings=use_visual_embeddings,
+        use_visual_pos_embeddings=use_visual_pos_embeddings,
     ).to(device)
     checkpoint = torch.load(
         args.checkpoint, map_location=lambda storage, loc: storage
