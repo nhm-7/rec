@@ -141,7 +141,7 @@ def run_experiment(
     trainer_args_to_dump = trainer_args.copy()
     trainer_args_to_dump["scheduler"] = trainer_args["scheduler"](trainer_args["max_epochs"])
     with open(os.path.join(output_full_dir, 'params.log'), 'w') as fh:
-        fh.write(f'{trainer_args | runtime_args | data_args | loss_args | model_args}')
+        fh.write(f'{trainer_args_to_dump | runtime_args | data_args | loss_args | model_args}')
 
     logger = pl.loggers.TensorBoardLogger(
         save_dir=output_full_dir,
