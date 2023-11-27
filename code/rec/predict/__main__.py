@@ -10,6 +10,7 @@ import torch
 import transformers
 import pandas as pd
 from torchvision.ops import box_iou
+import time
 
 import rec.models as m
 from rec.embeddings import get_embedding_instance
@@ -152,6 +153,18 @@ def get_args():
         type=str,
         default='valid'
     )
+    parser.add_argument(
+        '--use-visual-emb',
+        help='if set, predict using or not the visual embeddings. Possible values are: training, yes, no. Default: training',
+        type=str,
+        default='training'
+    )
+    parser.add_argument(
+        '--use-visual-pos-emb',
+        help='if set, predict using or not the visual position embeddings. Possible values are: training, yes, no. Default: training',
+        type=str,
+        default='training'
+    )
     args = parser.parse_args()
     cprint(f'{vars(args)}', color='red')
     return args
@@ -193,6 +206,22 @@ def run():
             num_conv, mu, mask_pooling = params['num_conv'], params['mu'], params['mask_pooling']
             visual_pos_emb_args = params["visual_pos_emb"]
             batch_size = params["batch_size"]
+            if args.use_visual_emb == "yes":
+                use_visual_embeddings = True
+            elif args.use_visual_emb == "no":
+                use_visual_embeddings = False
+            elif args.use_visual_emb == "training":
+                use_visual_embeddings = params["use_visual_embeddings"]
+            else:
+                raise NotImplementedError
+            if args.use_visual_pos_emb == "yes":
+                use_visual_pos_embeddings = True
+            elif args.use_visual_pos_emb == "no":
+                use_visual_pos_embeddings = False
+            elif args.use_visual_pos_emb == "training":
+                use_visual_pos_embeddings = params["use_visual_pos_embeddings"]
+            else:
+                raise NotImplementedError
     else:
         # parse model arguments from checkpoint path
         exp_dirname = os.path.split(os.path.dirname(args.checkpoint))[1]
@@ -216,9 +245,15 @@ def run():
         device = torch.device(f'cuda:{args.gpus}')
     else:
         device = torch.device('cpu')
+    params_used = {}
     for ag in ["dataset", "max_length", "input_size", "backbone", "num_heads", "num_layers", "num_conv",
-            "mu", "mask_pooling", "get_sample", "dump_results", "visual_pos_emb_args"]:
-        print(f"Parameter: {ag}, value {vars()[ag]}")
+               "mu", "mask_pooling", "get_sample", "dump_results", "visual_pos_emb_args",
+               "use_visual_pos_embeddings", "use_visual_embeddings"]:
+        params_used[ag] = vars()[ag]
+        print(f"Parameter: {ag}, value {params_used[ag]}")
+    date_predict = time.strftime("_%Y_%m_%d_%H_%M", time.gmtime())
+    with open(args.params.replace("params.log", f"params{date_predict}.log"), 'w') as fh:
+        fh.write(f'{params_used}')
     # ------------------------------------------------------------------------
     tokenizer = get_tokenizer()
     ds_class, ds_splits = get_split_ds_class(dataset, split_arg)
@@ -254,7 +289,9 @@ def run():
         num_conv=num_conv,
         segmentation_head=segmentation_head,
         mask_pooling=mask_pooling,
-        vis_pos_emb=vis_pos_emb
+        vis_pos_emb=vis_pos_emb,
+        use_visual_embeddings=use_visual_embeddings,
+        use_visual_pos_embeddings=use_visual_pos_embeddings,
     ).to(device)
     checkpoint = torch.load(
         args.checkpoint, map_location=lambda storage, loc: storage
@@ -275,9 +312,9 @@ def run():
         df_counts = get_rec_counts(df_results)
         if dump_results:
             df_results.to_parquet(
-                args.checkpoint.replace("best.ckpt", f"predictions_{split}.parquet"), index=False
+                args.checkpoint.replace("best.ckpt", f"predictions_{split}{date_predict}.parquet"), index=False
             )
             df_counts.to_csv(
-                args.checkpoint.replace("best.ckpt", f"counts_{split}.csv"), index=False
+                args.checkpoint.replace("best.ckpt", f"counts_{split}{date_predict}.csv"), index=False
             )
         print(df_counts)
