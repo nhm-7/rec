@@ -79,9 +79,9 @@ def progressbar(x, **kwargs):
 
 
 def draw_bounding_boxes(img, bboxes, labels=None, fmt="xywh",
-                        color=(223, 223, 0)):
+                        color=(223, 223, 0), line_width=1):
     assert fmt in ("xywh", "xyxy")
-    line_width = 1
+    line_width = line_width
     fnt_size = 8
     # fnt = ImageFont.truetype("arial.ttf", fnt_size)
     fnt = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', fnt_size)
