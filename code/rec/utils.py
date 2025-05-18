@@ -12,6 +12,8 @@ from torch import nn
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from colorama import Fore, Style, init
+from rec.predict.re_classifier import REClassifier
+from rec.refer.refer import REFER
 
 from rec.settings import TRANSFORMER_MODEL
 
@@ -186,3 +188,36 @@ def get_rec_counts(df_results):
         counts["hits"].append(df_results.loc[mask_rec_cls, "hits"].sum())
         counts["counts"].append(df_results.loc[mask_rec_cls, "hits"].shape[0])
     return pd.DataFrame().from_dict(counts)
+
+
+def get_rec_clf_counts(split='val', re_backend='stanza'):
+    """Get counts for a berkeley dataset, based on train, valid, test. Returns a dataframe with the basic stats."""
+    refer = REFER('code/rec/refer/data', 'refclef', 'berkeley', )
+    ref_ids = refer.getRefIds(split=split)
+    all_, intrinsic, spatial, ordinal, relational = [], [], [], [], []
+    classifier = REClassifier(backend=re_backend)
+    for rid in progressbar(ref_ids):
+        ref = refer.Refs[rid]
+        sentences = [s['sent'] for s in ref['sentences']]
+        for i, sent in enumerate(sentences):
+            stype = classifier.classify(sent)
+            len_ = len(sent.split())
+            all_.append(len_)
+            if sum(stype) == 0:
+                intrinsic.append(len_)
+            if stype[0]:
+                spatial.append(len_)
+            if stype[1]:
+                ordinal.append(len_)
+            if stype[2]:
+                relational.append(len_)
+    d_to_frame = {
+        "all": [len(all_), np.mean(all_), np.std(all_)],
+        "intrinsic": [len(intrinsic), np.mean(intrinsic), np.std(intrinsic)],
+        "spatial": [len(spatial), np.mean(spatial), np.std(spatial)],
+        "ordinal": [len(ordinal), np.mean(ordinal), np.std(ordinal)],
+        "relational": [len(relational), np.mean(relational), np.std(relational)],
+    }
+    df = pd.DataFrame().from_dict(d_to_frame).T.reset_index()
+    df.columns = ["class", "count", "mean_sentence_length", "std_sentence_length"]
+    return df
