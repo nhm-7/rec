@@ -1,6 +1,32 @@
-# What kinds of errors do reference resolution models make and what can we learn from them?
+# Computer Science Thesis - Nicolas Hormann
 
-This repository contains code and models for our NAACL 2022 paper [What kinds of errors do reference resolution models make and what can we learn from them?]() by Jorge Sánchez, Mauricio Mazuecos, Hernán Maina and Luciana Benotti.
+This repository contains code and models for our NAACL 2022 paper [What kinds of errors do reference resolution models make and what can we learn from them?](https://aclanthology.org/2022.findings-naacl.152.pdf) by Jorge Sánchez, Mauricio Mazuecos, Hernán Maina and Luciana Benotti.
+
+## 🔄 Updates and New Analysis
+We've recently:
+- Updated the codebase
+- Integrated **[YAER](https://github.com/arielrossanigo/yaer)** as an experiment runner
+- Conducted ablation studies analyzing how removing positional/visual information affects expression classification
+
+## 🔍 Key Results
+Our experiments reveal how information channels affect performance across expression types:
+
+| Vis  | Pos  | Spatial       | Ordinal       | Relational    | Intrinsic     |
+|------|------|---------------|---------------|---------------|---------------|
+| ON   | ON   | 63.61 (0.38)  | 39.11 (3.08)  | 49.04 (0.58)  | 83.54 (0.35)  |
+| ON   | OFF  | 55.10 (0.89)  | 30.00 (5.03)  | 38.42 (1.18)  | 77.91 (0.92)  |
+| **Relative Diff. (%)** |  | **-13.37%** | **-23.30%** | **-21.66%** | **-6.73%**  |
+| OFF  | ON   | 25.59 (0.55)  | 8.00 (2.65)   | 16.27 (1.06)  | 47.05 (0.36)  |
+| **Relative Diff. (%)** |  | **-59.78%** | **-79.55%** | **-66.83%** | **-43.68%**  |
+| OFF  | OFF  | 24.50 (0.68)  | 8.00 (1.45)   | 15.75 (0.78)  | 45.10 (0.50)  |
+| **Relative Diff. (%)** |  | **-61.48%** | **-79.54%** | **-67.89%** | **-46.01%**  |
+
+*Table 1: Accuracy (std. dev.) for ablation studies (threshold=0.5). Differences are relative to full-information baseline (Vis=ON, Pos=ON).*
+
+## 📚 Further Exploration
+- Detailed analysis: See Jupyter notebooks in [`notebooks/`](notebooks/)
+- Experiment framework: [YAER repository](https://github.com/arielrossanigo/yaer)
+
 
 ## Installation & set up
 
@@ -52,7 +78,7 @@ Run
 $ yaer run -e <exp_name>
 ```
 
-where <exp_name> is the name of the python function that you defined in the code/rec/experiments/exps.py file. The experiment will run and save the parameters, loggings and chekpoints by default into models/<exp_name>/ folder.
+where <exp_name> is the name of the python function that you defined in the code/rec/experiments/exps.py file. The experiment will run and save the parameters, loggings and chekpoints by default into models/<exp_name>/ folder. We used custom scripts defined in tools/ directory to run them in mendieta. You can check and customize them to your needs. For more info about how to build and set up experiments using YAER, check the code/rec/experiments/README.md file.
 
 
 ## Pretrained models
@@ -91,39 +117,8 @@ $ predict ~/models/<exp_name>/best.ckpt --params ~/models/<exp_name>/params.log 
 
 The script will infer the dataset and parameters from the <pretrained_full_name_folder> folder name, or will use the params.log ones. The test script is provided as an example use of our trained models. You can customize it to your needs.
 
-# Error analysis annotation
 
-We make available the annotation of the type of abilities needed for each RE to
-be correctly resolved in the file
-```ReferIt_Skill_annotation-NAACL2022.csv.g0```.
-
-The file contains more type of abilities than the ones discussed in the paper.
-The only types relevant for the analysis are:
-
- - fuzzy objects
- - meronimy
- - occlusion
- - directional
- - implicit
- - typo
- - viewpoint
-
-## Citation
-
-If you find this repository useful, please consider citing us.
-
-```bibtex
-@inproceedings{sanchez2022reference,
-  title = {What kinds of errors do reference resolution models make and what can we learn from them?},
-  author = {S\'anchez, Jorge and
-    Mazuecos, Mauricio and
-    Maina, Hern\'an and
-    Benotti, Luciana},
-  booktitle = {Findings of the {A}ssociation for {C}omputational {L}inguistics: {NAACL}},
-  year = {2022},
-  address = "Seattle, US",
-  publisher = "{A}ssociation for {C}omputational {L}inguistics",
-}
-```
+## Contact
 
 
+Any question do not hesitate to reach me (nicolas.hormann at mi.unc.edu.ar).
