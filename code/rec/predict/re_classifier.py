@@ -4,6 +4,7 @@ import stanza
 import spacy_stanza
 
 from textacy import extract
+from collections import Counter
 
 # subset of https://www.clres.com/db/classes/ClassSpatial.php
 # all that have a COUNT > 0 + not archaic/literary according to google translate + not in {'round', 'next door to'}
@@ -184,6 +185,25 @@ class REClassifier(object):
         is_ordinal = int(self.is_ordinal(doc))
         is_relational = int(self.is_relational(doc))
         return (is_spatial, is_ordinal, is_relational)
+
+    @staticmethod
+    def count_spatial_terms_separated(sent, nlp):
+        if isinstance(sent, str):
+            doc = nlp(sent)
+        else:
+            doc = sent
+        ngrams = [w.text.lower() for w in extract.ngrams(doc, (1, 2, 3), filter_stops=False)]
+        counts = {
+            "prepositions": Counter(),
+            "keywords": Counter()
+        }
+        for term in SPATIAL_PREPOSITIONS:
+            counts["prepositions"][term] = sum(1 for n in ngrams if n == term)
+        for term in SPATIAL_KEYWORDS:
+            counts["keywords"][term] = sum(1 for n in ngrams if n == term)
+        counts["prepositions"] = {k: v for k, v in counts["prepositions"].items() if v > 0}
+        counts["keywords"] = {k: v for k, v in counts["keywords"].items() if v > 0}
+        return counts
 
 
 def main():

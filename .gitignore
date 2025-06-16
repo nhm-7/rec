@@ -9,3 +9,7 @@ refer
 *.egg*
 models/*
 !models/.gitkeep
+*.png
+*.zip
+*.rar
+saia/
