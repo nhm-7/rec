@@ -1,16 +1,21 @@
-# Uso de YAER para versionar experimentos
+# Using YAER for Experiment Versioning
 
-## Descripción y usos
-La mayoría de científicos siempre tratan de hacer de sus experimentos reproducibles bajo ciertas condiciones iniciales, ó bien que se produzcan iguales salidas para las mismas entradas. En este trabajo no solo hicimos experimentos usando y modificando el modelo baseline descrito en el capítulo 2, sino que se hizo uso de una librería pública disponible en Github llamada Yet Another Experiment Runner (YAER).
+## Description and use cases
+Most scientists aim to make their experiments reproducible under certain initial conditions, or at least produce identical outputs for identical inputs. In this work, we not only ran experiments using and modifying the baseline model described in Chapter 2, but we also leveraged a public library available on GitHub called **Yet Another Experiment Runner (YAER)**.
 
-Técnicamente, YAER es un conjunto de decoradores de Python y se basa en la idea de que un experimento es solo una función con argumentos. Lo que nos permite hacer esta librería es centralizar todos los experimentos en un solo archivo, de manera que la mayoría de los argumentos que utiliza un determinado experimento queden explícitamente definidos en un archivo de Python. De esta forma, la reproducibilidad de un mismo experimento queda relacionada estrictamente a la versión de código del mismo.
+Technically, YAER is a set of Python decorators based on the idea that an experiment is simply a function with arguments. This library allows us to centralize all experiments in a single file, making most of the arguments for a given experiment explicitly defined in a Python file. This way, the reproducibility of an experiment becomes strictly tied to the version of the code itself.
 
-## Componentes
-YAER posee dos componentes principales, que son funciones de alto nivel, a saber:
-`experiment_component` y `experiment`. Estos decoradores permiten etiquetar a las funciones relacionadas a nuestros experimentos propios. Si un experimento es un conjunto de componentes que tienen alguna relación entre sí, dichos componentes serán etiquetados con el decorador `experiment_component`. Por otro lado, el experimento definido y que centraliza toda la configuración, lo etiquetamos con el decorador `experiment`, que establece un diccionario cuyas keys son los argumentos de un experimento, y los valores, son simplemente los valores que reciben esos argumentos al requerir la ejecución de algún experimento. Se puede consultar el código que define a ambos componentes directamente desde el [repositorio de YAER](https://github.com/arielrossanigo/yaer/tree/master).
+## Components
 
-## Cómo lo usamos en este trabajo
-En este trabajo todos los experimentos fueron definidos en el archivo `exps.py`. Por ejemplo, el experimento exp_001 fué definido así:
+YAER has two main high-level components:  
+`experiment_component` and `experiment`.  
+
+These decorators allow us to label functions related to our experiments. If an experiment consists of a set of components that are related to each other, those components are tagged with the `experiment_component` decorator. On the other hand, the main experiment function that centralizes the entire configuration is tagged with the `experiment` decorator.  
+
+This decorator defines a dictionary where the keys are the experiment’s arguments and the values are the corresponding parameters passed at runtime when running that experiment. You can check the implementation of both components directly in the [YAER repository](https://github.com/arielrossanigo/yaer/tree/master).
+
+## How we used it in this work
+In this project, all experiments were defined in the `exps.py` file. For example, the experiment `exp_001` was defined as follows:
 
 ```python
 @experiment({
@@ -71,4 +76,4 @@ def exp_001():
     run_experiment(model_factory=lit_model_factory)
 ```
 
-Como vemos, el decorador `experiment` define todos los argumentos que `exp_001` utilizará en tiempo de ejecución. Dichos conjuntos de argumentos se van a utilizar principalmente en `base.py`, pero muchos de ellos se actualizan en cascada en otros archivos de más "bajo nivel", como lo es `models.py` con la función `lit_model_factory`. En todos estos archivos, se utiliza el decorador `experiment_component`, dandole saber a YAER que en ese contexto hay que actualizar los argumentos durante la ejecución del experimento.
+As we can see, the `experiment` decorator defines all the arguments that `exp_001` will use at runtime. These argument sets are primarily consumed in `base.py`, but many of them are cascaded and updated in lower-level files such as `models.py`, particularly in the `lit_model_factory` function. In all these files, the `experiment_component` decorator is used, signaling YAER that arguments should be updated during the execution of the experiment.
