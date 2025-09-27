@@ -1,6 +1,6 @@
 # Computer Science Thesis - Nicolas Hormann
 
-This repository contains code and models for our NAACL 2022 paper [What kinds of errors do reference resolution models make and what can we learn from them?](https://aclanthology.org/2022.findings-naacl.152.pdf) by Jorge Sánchez, Mauricio Mazuecos, Hernán Maina and Luciana Benotti.
+This repository contains code and models from the NAACL 2022 paper [What kinds of errors do reference resolution models make and what can we learn from them?](https://aclanthology.org/2022.findings-naacl.152.pdf) by Jorge Sánchez, Mauricio Mazuecos, Hernán Maina and Luciana Benotti.
 
 ## 🔄 Updates and New Analysis
 We've recently:
