@@ -1,31 +1,37 @@
+"""Loss functions and loss modules for object detection and segmentation tasks."""
+
 import torch
-
 from torch import nn
-from torch.nn import functional as F
-
 
 # https://github.com/facebookresearch/fvcore/blob/master/fvcore/nn/giou_loss.py
+
+
 def giou_loss(
-        boxes1: torch.Tensor,
-        boxes2: torch.Tensor,
-        reduction: str = "none",
-        eps: float = 1e-7,
+    boxes1: torch.Tensor,
+    boxes2: torch.Tensor,
+    reduction: str = "none",
+    eps: float = 1e-7,
 ) -> torch.Tensor:
-    """
-    Generalized Intersection over Union Loss (Hamid Rezatofighi et. al)
-    https://arxiv.org/abs/1902.09630
+    """Compute the Generalized Intersection over Union loss.
+
+    Generalized Intersection over Union Loss (Hamid Rezatofighi et al.).
+    See: https://arxiv.org/abs/1902.09630
+
     Gradient-friendly IoU loss with an additional penalty that is non-zero when the
     boxes do not overlap and scales with the size of their smallest enclosing box.
     This loss is symmetric, so the boxes1 and boxes2 arguments are interchangeable.
-    Args:
-        boxes1, boxes2 (Tensor): box locations in XYXY format, shape (N, 4) or (4,).
-        reduction: 'none' | 'mean' | 'sum'
-                 'none': No reduction will be applied to the output.
-                 'mean': The output will be averaged.
-                 'sum': The output will be summed.
-        eps (float): small number to prevent division by zero
-    """
 
+    Args:
+        boxes1, boxes2 (Tensor): Box locations in XYXY format, shape (N, 4) or (4,).
+        reduction: 'none' | 'mean' | 'sum'.
+            'none': No reduction will be applied to the output.
+            'mean': The output will be averaged.
+            'sum': The output will be summed.
+        eps (float): Small number to prevent division by zero.
+
+    Returns:
+        Tensor: The computed GIoU loss.
+    """
     x1, y1, x2, y2 = boxes1.unbind(dim=-1)
     x1g, y1g, x2g, y2g = boxes2.unbind(dim=-1)
 
@@ -64,28 +70,60 @@ def giou_loss(
 
 
 class GIoULoss(nn.Module):
-    def __init__(self, reduction='mean'):
+    """Module for Generalized Intersection over Union (GIoU) loss."""
+
+    def __init__(self, reduction="mean"):
+        """Initialize GIoULoss module.
+
+        Args:
+            reduction (str): Specifies the reduction to apply to the output.
+        """
         super().__init__()
         self.reduction = reduction
 
     def forward(self, pred, target):
+        """Compute the GIoU loss between predictions and targets.
+
+        Args:
+            pred (Tensor): Predicted bounding boxes.
+            target (Tensor): Ground truth bounding boxes.
+
+        Returns:
+            Tensor: The computed GIoU loss.
+        """
         return giou_loss(pred, target, self.reduction, eps=1e-7)
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, gamma=2.0, reduction='mean'):
+    """Module for Focal Loss for addressing class imbalance."""
+
+    def __init__(self, gamma=2.0, reduction="mean"):
+        """Initialize FocalLoss module.
+
+        Args:
+            gamma (float): Focusing parameter for modulating factor.
+            reduction (str): Specifies the reduction to apply to the output.
+        """
         super().__init__()
         self.gamma = gamma
         self.reduction = reduction
-        self.ce_loss = nn.BCEWithLogitsLoss(reduction='none')
+        self.ce_loss = nn.BCEWithLogitsLoss(reduction="none")
 
     def forward(self, pred, target):
-        logpt = -self.ce_loss(pred, target)   # if y=1: pt=p, else: pt=1-p
+        """Compute the Focal Loss between predictions and targets.
+
+        Args:
+            pred (Tensor): Predicted logits.
+            target (Tensor): Ground truth labels.
+
+        Returns:
+            Tensor: The computed Focal Loss.
+        """
+        logpt = -self.ce_loss(pred, target)  # if y=1: pt=p, else: pt=1-p
         pt = torch.exp(logpt)
         loss = ((1.0 - pt) ** self.gamma) * (-logpt)
-        if self.reduction == 'mean':
+        if self.reduction == "mean":
             return loss.mean()
-        elif self.reduction == 'sum':
+        elif self.reduction == "sum":
             return loss.sum()
         return loss
-

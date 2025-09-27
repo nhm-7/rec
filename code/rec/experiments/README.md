@@ -7,10 +7,10 @@ Technically, YAER is a set of Python decorators based on the idea that an experi
 
 ## Components
 
-YAER has two main high-level components:  
-`experiment_component` and `experiment`.  
+YAER has two main high-level components:
+`experiment_component` and `experiment`.
 
-These decorators allow us to label functions related to our experiments. If an experiment consists of a set of components that are related to each other, those components are tagged with the `experiment_component` decorator. On the other hand, the main experiment function that centralizes the entire configuration is tagged with the `experiment` decorator.  
+These decorators allow us to label functions related to our experiments. If an experiment consists of a set of components that are related to each other, those components are tagged with the `experiment_component` decorator. On the other hand, the main experiment function that centralizes the entire configuration is tagged with the `experiment` decorator.
 
 This decorator defines a dictionary where the keys are the experiment’s arguments and the values are the corresponding parameters passed at runtime when running that experiment. You can check the implementation of both components directly in the [YAER repository](https://github.com/arielrossanigo/yaer/tree/master).
 

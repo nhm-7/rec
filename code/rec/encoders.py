@@ -1,22 +1,42 @@
-import os
-import torch
-import transformers
-
-import torch.nn.functional as F
+"""Define all code related to encoders."""
 from collections import OrderedDict
+
+import torch
+import torch.nn.functional as F
+import transformers
 from torch import nn
 from torchvision.models import detection
 
 from rec.backbones import get_backbone
 from rec.embeddings import Box8PositionEmbedding2D
+from rec.settings import EPS, TRANSFORMER_MODEL
 from rec.transformers_pos import TransformerEncoder, TransformerEncoderLayer
-from rec.settings import TRANSFORMER_MODEL, EPS
 from rec.utils import weight_init
 
 
 class ImageEncoder(nn.Module):
-    def __init__(self, backbone='resnet50', out_channels=256, pretrained=True,
-                 freeze_pretrained=False, with_pos=True):
+    """Extract spatial features from images using a configurable backbone (e.g., ResNet).
+
+    Optionally adds positional embeddings. The output is a feature map suitable for computer vision tasks.
+    """
+
+    def __init__(
+        self,
+        backbone="resnet50",
+        out_channels=256,
+        pretrained=True,
+        freeze_pretrained=False,
+        with_pos=True,
+    ):
+        """Initialize ImageEncoder.
+
+        Args:
+            backbone (str): Backbone model name.
+            out_channels (int): Output channels.
+            pretrained (bool): Use pretrained weights.
+            freeze_pretrained (bool): Freeze backbone weights.
+            with_pos (bool): Add positional embedding.
+        """
         super().__init__()
 
         model = get_backbone(backbone, pretrained)
@@ -25,27 +45,27 @@ class ImageEncoder(nn.Module):
             for p in model.parameters():
                 p.requires_grad = False
 
-        if 'resnet' in backbone:
+        if "resnet" in backbone:
             self.backbone = detection.backbone_utils.IntermediateLayerGetter(
-                model, return_layers=OrderedDict({'layer4': 'output'})
+                model, return_layers=OrderedDict({"layer4": "output"})
             )
-            channels = 512 if backbone in ('resnet18', 'resnet34') else 2048
+            channels = 512 if backbone in ("resnet18", "resnet34") else 2048
 
-        elif backbone in ('cspdarknet53', 'efficientnet-b0', 'efficientnet-b3'):
+        elif backbone in ("cspdarknet53", "efficientnet-b0", "efficientnet-b3"):
             output_layer_name = list(model.named_children())[-1][0]
             self.backbone = detection.backbone_utils.IntermediateLayerGetter(
-                model, return_layers=OrderedDict({output_layer_name: 'output'})
+                model, return_layers=OrderedDict({output_layer_name: "output"})
             )
             channels = {
-                'cspdarknet53': 1024,
-                'efficientnet-b0': 1280,
-                'efficientnet-b3': 1536
+                "cspdarknet53": 1024,
+                "efficientnet-b0": 1280,
+                "efficientnet-b3": 1536,
             }[backbone]
 
         else:
-            raise RuntimeError('not a valid backbone')
+            raise RuntimeError("not a valid backbone")
 
-        in_channels = channels+8 if with_pos else channels
+        in_channels = channels + 8 if with_pos else channels
 
         self.proj = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, (1, 1), 1, bias=False),
@@ -60,7 +80,15 @@ class ImageEncoder(nn.Module):
         self.out_channels = out_channels
 
     def forward(self, img, mask=None):
-        x = self.backbone(img)['output']
+        """Forward pass for image encoding.
+
+        Args:
+            img (Tensor): Input image tensor.
+            mask (Tensor, optional): Optional mask tensor.
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded image and mask.
+        """
+        x = self.backbone(img)["output"]
         if self.pos_emb is not None:
             x = torch.cat([x, self.pos_emb(x)], dim=1)
         x = self.proj(x)  # NxDxHxW
@@ -68,16 +96,35 @@ class ImageEncoder(nn.Module):
         x_mask = None
         if mask is not None:
             _, _, H, W = x.size()
-            x_mask = F.interpolate(mask, (H, W), mode='bilinear')
+            x_mask = F.interpolate(mask, (H, W), mode="bilinear")
             x_mask = (x_mask > 0.5).long()
 
         return x, x_mask
 
 
 class FPNImageEncoder(nn.Module):
-    def __init__(self,
-                 backbone='resnet50', out_channels=256, pretrained=True,
-                 freeze_pretrained=False, with_pos=True):
+    """Use a Feature Pyramid Network (FPN) on top of a backbone to combine multi-scale information.
+
+    Enables better spatial and multi-scale image representation. Optionally adds positional embeddings.
+    """
+
+    def __init__(
+        self,
+        backbone="resnet50",
+        out_channels=256,
+        pretrained=True,
+        freeze_pretrained=False,
+        with_pos=True,
+    ):
+        """Initialize FPNImageEncoder.
+
+        Args:
+            backbone (str): Backbone model name.
+            out_channels (int): Output channels.
+            pretrained (bool): Use pretrained weights.
+            freeze_pretrained (bool): Freeze backbone weights.
+            with_pos (bool): Add positional embedding.
+        """
         super().__init__()
 
         model = get_backbone(backbone, pretrained)
@@ -86,16 +133,16 @@ class FPNImageEncoder(nn.Module):
             for p in model.parameters():
                 p.requires_grad = False
 
-        if 'resnet' in backbone:
-            if backbone in ('resnet18', 'resnet34'):
+        if "resnet" in backbone:
+            if backbone in ("resnet18", "resnet34"):
                 in_channels_list = [64, 128, 256, 512]
             else:
                 in_channels_list = [256, 512, 1024, 2048]
-            return_layers = OrderedDict({
-                'layer1': '0', 'layer2': '1', 'layer3': '2', 'layer4': '3'
-            })
+            return_layers = OrderedDict(
+                {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
+            )
         else:
-            raise RuntimeError('not a valid backbone')
+            raise RuntimeError("not a valid backbone")
 
         self.backbone = model
 
@@ -103,21 +150,24 @@ class FPNImageEncoder(nn.Module):
             backbone=self.backbone,
             return_layers=return_layers,
             in_channels_list=in_channels_list,
-            out_channels=out_channels
+            out_channels=out_channels,
         )
 
-        self.fpn.fpn.extra_blocks = None   # removes the 'pool' layer added by default
+        self.fpn.fpn.extra_blocks = None  # removes the 'pool' layer added by default
 
         self.out_channels = out_channels
 
         in_channels = int(out_channels + float(with_pos) * 8)
 
-        self.proj = nn.ModuleDict({
-            level: nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, (1, 1), 1, bias=False),
-                nn.GroupNorm(1, out_channels, eps=EPS),
-            ) for level in return_layers.values()
-        })
+        self.proj = nn.ModuleDict(
+            {
+                level: nn.Sequential(
+                    nn.Conv2d(in_channels, out_channels, (1, 1), 1, bias=False),
+                    nn.GroupNorm(1, out_channels, eps=EPS),
+                )
+                for level in return_layers.values()
+            }
+        )
         self.proj.apply(weight_init)
 
         self.pos_emb = None
@@ -125,6 +175,14 @@ class FPNImageEncoder(nn.Module):
             self.pos_emb = Box8PositionEmbedding2D(with_projection=False)
 
     def forward(self, x, mask=None):
+        """Forward pass for FPN image encoding.
+
+        Args:
+            x (Tensor): Input image tensor.
+            mask (Tensor, optional): Optional mask tensor.
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded image and mask.
+        """
         x = self.fpn(x)
         # smallest feature map (eg. 16x16 for an input of 512x512 pixels)
         _, _, H, W = list(x.values())[-1].size()
@@ -133,8 +191,8 @@ class FPNImageEncoder(nn.Module):
         for level, fmap in x.items():
             if self.pos_emb is not None:
                 fmap = torch.cat([fmap, self.pos_emb(fmap)], dim=1)  # +Pos
-            fmap = self.proj[level](fmap)   # Conv+BN+ReLU
-            fmap = F.interpolate(fmap, (H, W), mode='nearest')  # to a smaller size
+            fmap = self.proj[level](fmap)  # Conv+BN+ReLU
+            fmap = F.interpolate(fmap, (H, W), mode="nearest")  # to a smaller size
             if x_out is None:
                 x_out = fmap
             else:
@@ -142,17 +200,39 @@ class FPNImageEncoder(nn.Module):
 
         x_mask = None
         if mask is not None:
-            x_mask = F.interpolate(mask, (H, W), mode='bilinear')
+            x_mask = F.interpolate(mask, (H, W), mode="bilinear")
             x_mask = (x_mask > 0.5).long()
 
         return x_out, x_mask
 
 
 class TransformerImageEncoder(nn.Module):
-    def __init__(self,
-                 backbone='resnet50', out_channels=256, pretrained=True,
-                 freeze_pretrained=False, num_heads=8, num_layers=6,
-                 dropout_p=0.1):
+    """Combine a convolutional backbone with a Transformer encoder to capture global spatial relationships.
+
+    Useful for tasks requiring global context.
+    """
+
+    def __init__(
+        self,
+        backbone="resnet50",
+        out_channels=256,
+        pretrained=True,
+        freeze_pretrained=False,
+        num_heads=8,
+        num_layers=6,
+        dropout_p=0.1,
+    ):
+        """Initialize TransformerImageEncoder.
+
+        Args:
+            backbone (str): Backbone model name.
+            out_channels (int): Output channels.
+            pretrained (bool): Use pretrained weights.
+            freeze_pretrained (bool): Freeze backbone weights.
+            num_heads (int): Number of attention heads.
+            num_layers (int): Number of transformer layers.
+            dropout_p (float): Dropout probability.
+        """
         super().__init__()
 
         model = get_backbone(backbone, pretrained)
@@ -161,25 +241,25 @@ class TransformerImageEncoder(nn.Module):
             for p in model.parameters():
                 p.requires_grad = False
 
-        if 'resnet' in backbone:
+        if "resnet" in backbone:
             self.backbone = detection.backbone_utils.IntermediateLayerGetter(
-                model, return_layers=OrderedDict({'layer4': 'output'})
+                model, return_layers=OrderedDict({"layer4": "output"})
             )
-            channels = 512 if backbone in ('resnet18', 'resnet34') else 2048
+            channels = 512 if backbone in ("resnet18", "resnet34") else 2048
 
-        elif backbone in ('cspdarknet53', 'efficientnet-b0', 'efficientnet-b3'):
+        elif backbone in ("cspdarknet53", "efficientnet-b0", "efficientnet-b3"):
             output_layer_name = list(model.named_children())[-1][0]
             self.backbone = detection.backbone_utils.IntermediateLayerGetter(
-                model, return_layers=OrderedDict({output_layer_name: 'output'})
+                model, return_layers=OrderedDict({output_layer_name: "output"})
             )
             channels = {
-                'cspdarknet53': 1024,
-                'efficientnet-b0': 1280,
-                'efficientnet-b3': 1536
+                "cspdarknet53": 1024,
+                "efficientnet-b0": 1280,
+                "efficientnet-b3": 1536,
             }[backbone]
 
         else:
-            raise RuntimeError('not a valid backbone')
+            raise RuntimeError("not a valid backbone")
 
         self.proj = nn.Sequential(
             nn.Conv2d(channels, out_channels, (1, 1), 1, bias=False),
@@ -192,9 +272,9 @@ class TransformerImageEncoder(nn.Module):
                 d_model=out_channels,
                 nhead=num_heads,
                 dropout=dropout_p,
-                batch_first=True
+                batch_first=True,
             ),
-            num_layers=num_layers
+            num_layers=num_layers,
         )
 
         self.pos_emb = Box8PositionEmbedding2D(embedding_dim=out_channels)
@@ -202,13 +282,22 @@ class TransformerImageEncoder(nn.Module):
         self.out_channels = out_channels
 
     def flatten(self, x):
+        """Flatten feature map to (N, H*W, C)."""
         N, _, H, W = x.size()
         x = x.to(memory_format=torch.channels_last)
-        x = x.permute(0, 2, 3, 1).view(N, H*W, -1)  # NxHWxD
+        x = x.permute(0, 2, 3, 1).view(N, H * W, -1)  # NxHWxD
         return x
 
     def forward(self, img, mask=None):
-        x = self.backbone(img)['output']
+        """Forward pass for transformer image encoding.
+
+        Args:
+            img (Tensor): Input image tensor.
+            mask (Tensor, optional): Optional mask tensor.
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded image and mask.
+        """
+        x = self.backbone(img)["output"]
         x = self.proj(x)  # NxDxHxW
 
         N, _, H, W = x.size()
@@ -221,14 +310,14 @@ class TransformerImageEncoder(nn.Module):
         # visibility mask
         x_mask = None
         if mask is not None:
-            x_mask = F.interpolate(mask, (H, W), mode='bilinear')
+            x_mask = F.interpolate(mask, (H, W), mode="bilinear")
             x_mask = (x_mask > 0.5).long()
 
         if mask is None:
             x = self.encoder(x, pos=pos)  # NxRxD
         else:
             mask = self.flatten(x_mask).squeeze(-1)
-            x = self.encoder(x, src_key_padding_mask=(mask==0), pos=pos)  # NxRxD
+            x = self.encoder(x, src_key_padding_mask=(mask == 0), pos=pos)  # NxRxD
 
         x = x.permute(0, 2, 1).view(N, -1, H, W)  # NxDxHxW
 
@@ -236,12 +325,28 @@ class TransformerImageEncoder(nn.Module):
 
 
 class LanguageEncoder(nn.Module):
-    def __init__(self, out_features=256, dropout_p=0.2,
-                 freeze_pretrained=False, global_pooling=True):
+    """Process text sequences using a pretrained transformer model and project the output to a configurable dimension.
+
+    Enables the use of linguistic representations in multimodal models.
+    """
+
+    def __init__(
+        self,
+        out_features=256,
+        dropout_p=0.2,
+        freeze_pretrained=False,
+        global_pooling=True,
+    ):
+        """Initialize LanguageEncoder.
+
+        Args:
+            out_features (int): Output feature dimension.
+            dropout_p (float): Dropout probability.
+            freeze_pretrained (bool): Freeze transformer weights.
+            global_pooling (bool): Use global pooling or not.
+        """
         super().__init__()
-        self.language_model = transformers.AutoModel.from_pretrained(
-            TRANSFORMER_MODEL
-        )
+        self.language_model = transformers.AutoModel.from_pretrained(TRANSFORMER_MODEL)
 
         if freeze_pretrained:
             for p in self.language_model.parameters():
@@ -258,16 +363,22 @@ class LanguageEncoder(nn.Module):
         self.global_pooling = bool(global_pooling)
 
     def forward(self, z):
+        """Forward pass for language encoding.
+
+        Args:
+            z (dict): Dictionary with 'input_ids' and 'attention_mask'.
+        Returns:
+            Tuple[Tensor, Optional[Tensor]]: Encoded text and mask.
+        """
         res = self.language_model(
-            input_ids=z['input_ids'],
+            input_ids=z["input_ids"],
             position_ids=None,
-            attention_mask=z['attention_mask']
+            attention_mask=z["attention_mask"],
         )
 
         if self.global_pooling:
             z, z_mask = self.proj(res.pooler_output), None
         else:
-            z, z_mask = self.proj(res.last_hidden_state), z['attention_mask']
+            z, z_mask = self.proj(res.last_hidden_state), z["attention_mask"]
 
         return z, z_mask
-
